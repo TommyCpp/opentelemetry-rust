@@ -13,9 +13,9 @@
 //! In order to enable telemetry the application must take a dependency on the OpenTelemetry SDK,
 //! which implements the delivery of the telemetry. The application must also configure exporters
 //! so that the SDK knows where and how to deliver the telemetry.
-mod baggage;
-mod context;
-mod core;
+pub(crate) mod baggage;
+pub(crate) mod context;
+pub(crate) mod core;
 pub mod labels;
 #[cfg(feature = "metrics")]
 #[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
@@ -25,6 +25,8 @@ pub mod propagation;
 #[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub mod trace;
 
-pub use self::baggage::{Baggage, BaggageExt};
-pub use self::context::Context;
-pub use self::core::{Key, KeyValue, Unit, Value};
+#[allow(unused)]
+pub(crate) use self::baggage::{Baggage, BaggageExt};
+pub(crate) use self::context::Context;
+#[allow(unused)]
+pub(crate) use self::core::{Key, KeyValue, Unit, Value};

@@ -30,7 +30,7 @@ const OTEL_BSP_MAX_EXPORT_BATCH_SIZE_DEFAULT: usize = 512;
 /// ended. If you find this limiting, consider the batch processor instead.
 ///
 /// ```
-/// use opentelemetry::{api::trace as apitrace, sdk::trace as sdktrace, global};
+/// use opentelemetry::{trace as apitrace, sdk::trace as sdktrace, global};
 ///
 /// // Configure your preferred exporter
 /// let exporter = apitrace::NoopSpanExporter::new();
@@ -83,7 +83,7 @@ impl api::trace::SpanProcessor for SimpleSpanProcessor {
 ///
 /// ```
 /// use futures::{stream};
-/// use opentelemetry::{api::trace as apitrace, sdk::trace as sdktrace, global};
+/// use opentelemetry::{trace as apitrace, sdk::trace as sdktrace, global};
 /// use std::time::Duration;
 ///
 /// #[tokio::main]

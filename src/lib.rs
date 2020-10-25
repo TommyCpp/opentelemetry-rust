@@ -13,7 +13,7 @@
 //! ## Getting Started
 //!
 //! ```no_run
-//! use opentelemetry::{api::trace::Tracer, exporter::trace::stdout};
+//! use opentelemetry::{trace::Tracer, exporter::trace::stdout};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
 //!     // Create a new instrumentation pipeline
@@ -56,7 +56,22 @@
 #![cfg_attr(docsrs, feature(doc_cfg), deny(broken_intra_doc_links))]
 #![cfg_attr(test, deny(warnings))]
 
-pub mod api;
+pub(crate) mod api;
+
+pub use api::labels;
+#[cfg(feature = "metrics")]
+#[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
+pub use api::metrics;
+pub use api::propagation;
+#[cfg(feature = "trace")]
+#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
+pub use api::trace;
+pub use api::{
+    baggage::{Baggage, BaggageExt},
+    context::Context,
+    core::{Key, KeyValue, Unit, Value},
+};
+
 #[cfg(feature = "trace")]
 #[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub mod experimental;

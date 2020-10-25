@@ -1,7 +1,7 @@
 use crate::datadog::intern::StringInterner;
 use crate::datadog::model::Error;
-use opentelemetry::api::{Key, Value};
 use opentelemetry::exporter::trace;
+use opentelemetry::{Key, Value};
 use std::time::SystemTime;
 
 // Protocol documentation sourced from https://github.com/DataDog/datadog-agent/blob/c076ea9a1ffbde4c76d35343dbc32aecbbf99cb9/pkg/trace/api/version.go

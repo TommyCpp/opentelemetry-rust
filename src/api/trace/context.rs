@@ -26,14 +26,14 @@ pub trait TraceContextExt {
     /// # Examples
     ///
     /// ```
-    /// use opentelemetry::{api, api::{Context, trace::{TracerProvider, TraceContextExt, Tracer}}, sdk::trace as sdktrace};
+    /// use opentelemetry::{Context, trace::{TracerProvider, TraceContextExt, Tracer}, sdk::trace as sdktrace, trace};
     ///
     /// // returns a reference to an empty span by default
-    /// assert_eq!(Context::current().span().span_reference(), api::trace::SpanReference::empty_context());
+    /// assert_eq!(Context::current().span().span_reference(), trace::SpanReference::empty_context());
     ///
     /// sdktrace::TracerProvider::default().get_tracer("my-component", None).in_span("my-span", |cx| {
     ///     // Returns a reference to the current span if set
-    ///     assert_ne!(cx.span().span_reference(), api::trace::SpanReference::empty_context());
+    ///     assert_ne!(cx.span().span_reference(), trace::SpanReference::empty_context());
     /// });
     /// ```
     fn span(&self) -> &dyn api::trace::Span;

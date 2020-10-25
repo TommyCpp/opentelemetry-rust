@@ -1,6 +1,6 @@
 use crate::datadog::model::Error;
-use opentelemetry::api::{Key, Value};
 use opentelemetry::exporter::trace;
+use opentelemetry::{Key, Value};
 use std::time::SystemTime;
 
 pub(crate) fn encode(service_name: &str, spans: Vec<trace::SpanData>) -> Result<Vec<u8>, Error> {

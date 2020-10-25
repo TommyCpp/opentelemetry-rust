@@ -27,7 +27,7 @@ lazy_static::lazy_static! {
 /// # Examples
 ///
 /// ```
-/// use opentelemetry::api::{BaggageExt, Key, propagation::TextMapPropagator};
+/// use opentelemetry::{BaggageExt, Key, propagation::TextMapPropagator};
 /// use opentelemetry::sdk::propagation::BaggagePropagator;
 /// use std::collections::HashMap;
 ///

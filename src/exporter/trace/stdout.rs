@@ -11,7 +11,7 @@
 //! # Examples
 //!
 //! ```no_run
-//! use opentelemetry::api::trace::Tracer;
+//! use opentelemetry::trace::Tracer;
 //! use opentelemetry::exporter::trace::stdout;
 //!
 //! fn main() {

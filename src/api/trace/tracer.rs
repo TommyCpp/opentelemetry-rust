@@ -34,7 +34,7 @@ use std::time::SystemTime;
 /// Spans can be created and nested manually:
 ///
 /// ```
-/// use opentelemetry::{global, api::trace::{Span, Tracer}};
+/// use opentelemetry::{global, trace::{Span, Tracer}};
 /// let tracer = global::tracer("my-component");
 ///
 /// let parent = tracer.start("foo");
@@ -51,7 +51,7 @@ use std::time::SystemTime;
 /// Spans can also use the current thread's [`Context`] to track which span is active:
 ///
 /// ```
-/// use opentelemetry::{global, api::trace::{Tracer, SpanKind}};
+/// use opentelemetry::{global, trace::{Tracer, SpanKind}};
 /// let tracer = global::tracer("my-component");
 ///
 /// // Create simple spans with `in_span`
@@ -83,7 +83,7 @@ use std::time::SystemTime;
 /// greater control over when the span is no longer considered active.
 ///
 /// ```
-/// use opentelemetry::{global, api::trace::{Span, Tracer}};
+/// use opentelemetry::{global, trace::{Span, Tracer}};
 /// let tracer = global::tracer("my-component");
 ///
 /// let parent_span = tracer.start("foo");
@@ -112,7 +112,7 @@ use std::time::SystemTime;
 /// the following example _will not_ work:
 ///
 /// ```no_run
-/// # use opentelemetry::{global, api::trace::Tracer};
+/// # use opentelemetry::{global, trace::Tracer};
 /// # let tracer = global::tracer("foo");
 /// # let span = tracer.start("foo-span");
 /// async {
@@ -133,7 +133,7 @@ use std::time::SystemTime;
 ///
 /// ```
 /// # async fn run() -> Result<(), ()> {
-/// use opentelemetry::api::{Context, trace::FutureExt};
+/// use opentelemetry::{Context, trace::FutureExt};
 /// let cx = Context::current();
 ///
 /// let my_future = async {
@@ -238,7 +238,7 @@ pub trait Tracer: fmt::Debug + 'static {
     /// # Examples
     ///
     /// ```
-    /// use opentelemetry::{global, api::{trace::{Span, Tracer}, KeyValue}};
+    /// use opentelemetry::{global, {trace::{Span, Tracer}, KeyValue}};
     ///
     /// fn my_function() {
     ///     let tracer = global::tracer("my-component-a");
@@ -267,7 +267,7 @@ pub trait Tracer: fmt::Debug + 'static {
     /// # Examples
     ///
     /// ```
-    /// use opentelemetry::{global, api::{trace::{Span, Tracer}, KeyValue}};
+    /// use opentelemetry::{global, {trace::{Span, Tracer}, KeyValue}};
     ///
     /// fn my_function() {
     ///     // start an active span in one function
@@ -302,7 +302,7 @@ pub trait Tracer: fmt::Debug + 'static {
     /// # Examples
     ///
     /// ```
-    /// use opentelemetry::{global, api::{trace::{Span, Tracer}, KeyValue}};
+    /// use opentelemetry::{global, {trace::{Span, Tracer}, KeyValue}};
     ///
     /// fn my_function() {
     ///     // start an active span in one function
@@ -340,7 +340,7 @@ pub trait Tracer: fmt::Debug + 'static {
     /// # Examples
     ///
     /// ```
-    /// use opentelemetry::{global, api::{trace::{Span, SpanKind, Tracer}, KeyValue}};
+    /// use opentelemetry::{global, {trace::{Span, SpanKind, Tracer}, KeyValue}};
     ///
     /// fn my_function() {
     ///     let tracer = global::tracer("my-component");
@@ -376,7 +376,7 @@ pub trait Tracer: fmt::Debug + 'static {
 ///
 /// ```rust
 /// use opentelemetry::{
-///     api::trace::{TracerProvider, SpanBuilder, SpanKind, Tracer},
+///     trace::{TracerProvider, SpanBuilder, SpanKind, Tracer},
 ///     global,
 /// };
 ///

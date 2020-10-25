@@ -17,7 +17,7 @@ use std::collections::HashSet;
 /// # Examples
 ///
 /// ```
-/// use opentelemetry::api::{
+/// use opentelemetry::{
 ///     propagation::TextMapPropagator,
 ///     trace::{TraceContextExt, Tracer, TracerProvider},
 ///     Context, KeyValue,BaggageExt,
