@@ -1,5 +1,5 @@
-mod span_processor;
 mod aggregator;
+mod span_processor;
 
-pub use span_processor::ZPagesProcessor;
 pub use aggregator::SpanAggregator;
+pub use span_processor::ZPagesProcessor;

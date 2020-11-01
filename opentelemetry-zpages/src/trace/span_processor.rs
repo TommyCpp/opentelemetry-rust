@@ -4,24 +4,21 @@
 //! for further process.
 //!
 //! [`SpanAggregator`]:../struct.SpanAggregator.html
-use opentelemetry::{
-    trace::{SpanProcessor, SpanId},
-    exporter::trace::SpanData,
-};
-use std::time::SystemTime;
-use std::sync::Mutex;
 use futures::channel::mpsc;
-use std::fmt::Formatter;
+use opentelemetry::{
+    exporter::trace::SpanData,
+    trace::{SpanId, SpanProcessor},
+};
 use std::collections::HashMap;
+use std::fmt::Formatter;
+use std::sync::Mutex;
 
+#[derive(Debug)]
 pub enum TracezMessage {
     // Sample span on start
     SampleSpan(SpanData),
     // Send span information on start
-    SpanStart {
-        span_name: String,
-        span_id: SpanId,
-    },
+    SpanStart { span_name: String, span_id: SpanId },
     SpanEnd(SpanData),
     ShutDown,
 }
@@ -51,15 +48,20 @@ impl SpanProcessor for ZPagesProcessor {
             // if we already have span sampled for this span name, just send span name, span id.
             // if not, then send the whole span for sampling.
             if inner.current_sampled_span.contains_key(&span.name) {
-                inner.channel.try_send(TracezMessage::SpanStart {
+                let _ = inner.channel.try_send(TracezMessage::SpanStart {
                     span_name: span.name.clone(),
                     span_id: span.span_context.span_id(),
                 });
             } else {
-                inner.channel.try_send(TracezMessage::SampleSpan(span.clone())).and_then(|_| {
-                    inner.current_sampled_span.insert(span.name.clone(), span.span_context.span_id());
-                    Ok(())
-                });
+                let _ = inner
+                    .channel
+                    .try_send(TracezMessage::SampleSpan(span.clone()))
+                    .and_then(|_| {
+                        inner
+                            .current_sampled_span
+                            .insert(span.name.clone(), span.span_context.span_id());
+                        Ok(())
+                    });
             }
         }
     }
@@ -70,7 +72,7 @@ impl SpanProcessor for ZPagesProcessor {
             if inner.current_sampled_span.contains_key(&span.name) {
                 inner.current_sampled_span.remove(&span.name);
             }
-            inner.channel.try_send(TracezMessage::SpanEnd(span));
+            let _ = inner.channel.try_send(TracezMessage::SpanEnd(span));
         }
     }
 
