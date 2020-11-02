@@ -80,6 +80,12 @@ impl Span {
                 .and_then(|mut span_data| span_data.as_mut().map(f))
         })
     }
+
+    /// Convert information in this span into `exporter::trace::SpanData`
+    pub fn exported_data(&self) -> Option<crate::exporter::trace::SpanData> {
+        let (span_context, tracer) = (self.inner.span_context.clone(), &self.inner.tracer);
+        self.with_data(|data| build_export_data(data.clone(), span_context, tracer))
+    }
 }
 
 impl crate::trace::Span for Span {
