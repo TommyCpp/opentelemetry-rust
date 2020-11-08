@@ -1,3 +1,5 @@
+//! Tracez implementation
+//!
 mod aggregator;
 mod span_processor;
 

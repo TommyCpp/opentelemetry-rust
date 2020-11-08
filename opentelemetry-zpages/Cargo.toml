@@ -23,6 +23,12 @@ rustdoc-args = ["--cfg", "docsrs"]
 opentelemetry = { version = "0.9.1", path = "../opentelemetry", default-features = false, features = ["trace"] }
 futures = "0.3"
 lazy_static = "1.4.0"
+grpcio = "0.6"
+protobuf = "2.18"
 
 [dev-dependencies]
 tokio = { version = "0.3.2", features = ["full"] }
+
+[build-dependencies]
+protobuf-codegen = "2.16"
+protoc-grpcio = "2.0"
