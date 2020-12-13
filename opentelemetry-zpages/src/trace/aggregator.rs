@@ -8,10 +8,10 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use futures::channel::mpsc;
 use futures::StreamExt;
 
-use opentelemetry::exporter::trace::SpanData;
 use opentelemetry::trace::StatusCode;
 
-use crate::trace::span_processor::TracezMessage;
+use crate::trace::TracezMessage;
+use opentelemetry::sdk::export::trace::SpanData;
 
 lazy_static! {
     static ref LATENCY_BUCKET: [Duration; 9] = [
@@ -88,6 +88,10 @@ impl SpanAggregator {
                             }
                         }
                         TracezMessage::SampleSpan(span) => {
+                            // Resample span whenever there is a new span starts.
+                            //
+                            // This helps us clean the stale span that failed to be evicted because
+                            // of the failure to deliver the span end message.
                             let summary = self.summaries.entry(span.name.clone()).or_default();
                             summary.running_sample_span = Some(span);
                             summary.running_num += 1;
@@ -146,12 +150,11 @@ mod tests {
     use futures::channel::mpsc;
     use futures::SinkExt;
 
-    use opentelemetry::exporter::trace::SpanData;
     use opentelemetry::sdk::trace::{EvictedHashMap, EvictedQueue};
     use opentelemetry::trace::{SpanContext, SpanId, SpanKind, StatusCode, TraceId, TraceState};
 
-    use crate::trace::span_processor::TracezMessage;
-    use crate::trace::SpanAggregator;
+    use crate::trace::{SpanAggregator, TracezMessage};
+    use opentelemetry::sdk::export::trace::SpanData;
 
     #[tokio::test]
     async fn test_process() -> Result<(), Box<dyn std::error::Error>> {

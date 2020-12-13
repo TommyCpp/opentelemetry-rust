@@ -10,15 +10,9 @@ use std::sync::Mutex;
 use futures::channel::mpsc;
 
 use opentelemetry::sdk::trace::{Span, SpanProcessor};
-use opentelemetry::{exporter::trace::SpanData, Context};
-
-#[derive(Debug)]
-pub enum TracezMessage {
-    // Sample span on start
-    SampleSpan(SpanData),
-    SpanEnd(SpanData),
-    ShutDown,
-}
+use opentelemetry::{sdk::export::trace::SpanData, Context};
+use opentelemetry::trace::TraceResult;
+use crate::trace::TracezMessage;
 
 /// ZPagesProcessor is an alternative to external exporters. It sends span data to zPages server
 /// where it will be archive and user can use this information for debug purpose.
@@ -53,7 +47,13 @@ impl SpanProcessor for ZPagesProcessor {
         }
     }
 
-    fn shutdown(&mut self) {
+    fn force_flush(&self) -> TraceResult<()>{
         // do nothing
+        Ok(())
+    }
+
+    fn shutdown(&mut self) -> TraceResult<()>{
+        // do nothing
+        Ok(())
     }
 }
