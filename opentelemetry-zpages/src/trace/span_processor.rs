@@ -17,7 +17,9 @@ use crate::trace::TracezMessage;
 /// ZPagesProcessor is an alternative to external exporters. It sends span data to zPages server
 /// where it will be archive and user can use this information for debug purpose.
 ///
-/// When span starts, the zPages processor determine whether there is a span with the span name is sampled already. If not, send the whole span for sampling purpose. Otherwise, just send span name, span id to avoid the unnecessary clone [`SpanAggregator`] .
+/// When span starts, the zPages processor determine whether there is a span with the span name
+/// is sampled already. If not, send the whole span for sampling purpose. Otherwise, just send span
+/// name, span id to avoid the unnecessary clone [`SpanAggregator`] .
 /// When span ends, the zPages processor will send complete span data to [`SpanAggregator`] .
 ///
 pub struct ZPagesProcessor(Mutex<Inner>);
