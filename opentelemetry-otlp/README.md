@@ -48,7 +48,7 @@ telemetry:
 use opentelemetry::tracer;
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-    let (tracer, _uninstall) = opentelemetry_otlp::new_pipeline().install()?;
+    let tracer = opentelemetry_otlp::new_pipeline().install()?;
 
     tracer.in_span("doing_work", |cx| {
         // Traced app logic here...
@@ -115,7 +115,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     map.insert("x-number", "123".parse().unwrap());
     map.insert_bin("trace-proto-bin", MetadataValue::from_bytes(b"[binary data]"));
 
-    let (tracer, _uninstall) = opentelemetry_otlp::new_pipeline()
+    let tracer = opentelemetry_otlp::new_pipeline()
         .with_endpoint("localhost:4317")
         .with_protocol(Protocol::Grpc)
         .with_metadata(map)
