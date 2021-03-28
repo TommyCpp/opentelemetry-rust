@@ -42,14 +42,9 @@ pub mod trace {
 }
 
 #[cfg(feature = "grpc-sys")]
-pub(crate) mod grpcio {
-    pub(crate) mod common;
-    pub(crate) mod metrics;
-    pub(crate) mod metrics_service;
-    pub(crate) mod metrics_service_grpc;
-    pub(crate) mod resource;
-    pub(crate) mod trace;
-    pub(crate) mod trace_config;
-    pub(crate) mod trace_service;
+pub mod grpcio {
+    include!(concat!(env!("OUT_DIR"), "/mod.rs"));
+
     pub(crate) mod trace_service_grpc;
+    pub(crate) mod metrics_service_grpc;
 }
