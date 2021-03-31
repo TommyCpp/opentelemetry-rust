@@ -68,3 +68,8 @@ required-features = ["metrics"]
 name = "ddsketch"
 harness = false
 required-features = ["metrics"]
+
+[[bench]]
+name = "spans_processor"
+harness = false
+required-features = ["testing"]
