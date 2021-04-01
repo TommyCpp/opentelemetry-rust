@@ -7,7 +7,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let batch_size = 30;
     let max_queue_size = 100;
     let delay = Duration::from_secs(20);
-    let export_time = Duration::from_millis(10);
+    let export_time = Duration::from_millis(2);
 
     let mut group = c.benchmark_group("batch processor");
     group.sample_size(10);
