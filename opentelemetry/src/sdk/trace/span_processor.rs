@@ -278,8 +278,8 @@ impl BatchSpanProcessor {
         config: BatchConfig,
         runtime: R,
     ) -> Self
-    where
-        R: Runtime,
+        where
+            R: Runtime,
     {
         let (message_sender, message_receiver) = mpsc::channel(config.max_queue_size);
         let ticker = runtime
@@ -305,7 +305,7 @@ impl BatchSpanProcessor {
                                 &timeout_runtime,
                                 spans.split_off(0),
                             )
-                            .await;
+                                .await;
 
                             if let Err(err) = result {
                                 global::handle_error(err);
@@ -320,7 +320,7 @@ impl BatchSpanProcessor {
                             &timeout_runtime,
                             spans.split_off(0),
                         )
-                        .await;
+                            .await;
 
                         if let Some(channel) = res_channel {
                             if let Err(err) = channel.send(result) {
@@ -344,7 +344,7 @@ impl BatchSpanProcessor {
                             &timeout_runtime,
                             spans.split_off(0),
                         )
-                        .await;
+                            .await;
 
                         exporter.shutdown();
 
@@ -369,9 +369,9 @@ impl BatchSpanProcessor {
 
     /// Create a new batch processor builder
     pub fn builder<E, R>(exporter: E, runtime: R) -> BatchSpanProcessorBuilder<E, R>
-    where
-        E: SpanExporter,
-        R: Runtime,
+        where
+            E: SpanExporter,
+            R: Runtime,
     {
         BatchSpanProcessorBuilder {
             exporter,
@@ -387,9 +387,9 @@ async fn export_with_timeout<R, E>(
     runtime: &R,
     batch: Vec<SpanData>,
 ) -> ExportResult
-where
-    R: Runtime,
-    E: SpanExporter + ?Sized,
+    where
+        R: Runtime,
+        E: SpanExporter + ?Sized,
 {
     if batch.is_empty() {
         return Ok(());
@@ -485,9 +485,9 @@ pub struct BatchSpanProcessorBuilder<E, R> {
 }
 
 impl<E, R> BatchSpanProcessorBuilder<E, R>
-where
-    E: SpanExporter + 'static,
-    R: Runtime,
+    where
+        E: SpanExporter + 'static,
+        R: Runtime,
 {
     /// Set max queue size for batches
     pub fn with_max_queue_size(self, size: usize) -> Self {
@@ -640,9 +640,9 @@ mod tests {
     }
 
     impl<D, DS> Debug for BlockingExporter<D>
-    where
-        D: Fn(Duration) -> DS + 'static + Send + Sync,
-        DS: Future<Output = ()> + Send + Sync + 'static,
+        where
+            D: Fn(Duration) -> DS + 'static + Send + Sync,
+            DS: Future<Output = ()> + Send + Sync + 'static,
     {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.write_str("blocking exporter for testing")
@@ -651,9 +651,9 @@ mod tests {
 
     #[async_trait]
     impl<D, DS> SpanExporter for BlockingExporter<D>
-    where
-        D: Fn(Duration) -> DS + 'static + Send + Sync,
-        DS: Future<Output = ()> + Send + Sync + 'static,
+        where
+            D: Fn(Duration) -> DS + 'static + Send + Sync,
+            DS: Future<Output = ()> + Send + Sync + 'static,
     {
         async fn export(&mut self, _batch: Vec<SpanData>) -> ExportResult {
             (self.delay_fn)(self.delay_for).await;
