@@ -47,7 +47,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 rt.block_on(async move {
                     let span_processor =
                         BatchSpanProcessor::builder(NoopSpanExporter::new(), Tokio).with_max_queue_size(10_000).build();
-                    let shared_span_processor = Arc::new(span_processor);
+                    let mut shared_span_processor = Arc::new(span_processor);
                     let mut handles = Vec::with_capacity(10);
                     for _ in 0..task_num {
                         let span_processor = shared_span_processor.clone();
@@ -60,6 +60,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                         }));
                     }
                     futures::future::join_all(handles).await;
+                    let _ = Arc::<BatchSpanProcessor>::get_mut(&mut shared_span_processor).unwrap().shutdown();
                 });
             })
         });
