@@ -170,7 +170,7 @@
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg"
 )]
-#![cfg_attr(test, deny(warnings))]
+#![cfg_attr(test, allow(warnings))]
 
 pub mod global;
 pub mod sdk;

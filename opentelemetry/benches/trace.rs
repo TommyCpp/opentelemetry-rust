@@ -10,20 +10,20 @@ use opentelemetry::{
 use opentelemetry::sdk::trace::BatchSpanProcessor;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("EvictedHashMap");
-    group.bench_function("insert 1", |b| {
-        b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 1), 1))
-    });
-    group.bench_function("insert 5", |b| {
-        b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 5), 5))
-    });
-    group.bench_function("insert 10", |b| {
-        b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 10), 10))
-    });
-    group.bench_function("insert 20", |b| {
-        b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 20), 20))
-    });
-    group.finish();
+    // let mut group = c.benchmark_group("EvictedHashMap");
+    // group.bench_function("insert 1", |b| {
+    //     b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 1), 1))
+    // });
+    // group.bench_function("insert 5", |b| {
+    //     b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 5), 5))
+    // });
+    // group.bench_function("insert 10", |b| {
+    //     b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 10), 10))
+    // });
+    // group.bench_function("insert 20", |b| {
+    //     b.iter(|| insert_keys(sdktrace::EvictedHashMap::new(32, 20), 20))
+    // });
+    // group.finish();
 
     trace_benchmark_group(c, "start-end-span", |tracer| tracer.start("foo").end());
 
