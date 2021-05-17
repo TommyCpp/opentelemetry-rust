@@ -7,6 +7,7 @@ use opentelemetry::{
     trace::{Span, Tracer, TracerProvider},
     Key, KeyValue,
 };
+use opentelemetry::sdk::trace::BatchSpanProcessor;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("EvictedHashMap");
@@ -108,27 +109,38 @@ impl SpanExporter for VoidExporter {
 }
 
 fn trace_benchmark_group<F: Fn(&sdktrace::Tracer)>(c: &mut Criterion, name: &str, f: F) {
+    let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group(name);
+    rt.block_on(async {
+        group.bench_function("always-sample", |b| {
+            let span_processor =
+                BatchSpanProcessor::builder(VoidExporter, opentelemetry::runtime::Tokio)
+                    .with_max_queue_size(1000_000)
+                    .build();
+            let provider = sdktrace::TracerProvider::builder()
+                .with_config(sdktrace::config().with_sampler(sdktrace::Sampler::AlwaysOn))
+                .with_span_processor(span_processor)
+                .build();
+            let always_sample = provider.get_tracer("always-sample", None);
 
-    group.bench_function("always-sample", |b| {
-        let provider = sdktrace::TracerProvider::builder()
-            .with_config(sdktrace::config().with_sampler(sdktrace::Sampler::AlwaysOn))
-            .with_simple_exporter(VoidExporter)
-            .build();
-        let always_sample = provider.get_tracer("always-sample", None);
-
-        b.iter(|| f(&always_sample));
+            b.iter(|| f(&always_sample));
+        });
     });
-
-    group.bench_function("never-sample", |b| {
-        let provider = sdktrace::TracerProvider::builder()
-            .with_config(sdktrace::config().with_sampler(sdktrace::Sampler::AlwaysOff))
-            .with_simple_exporter(VoidExporter)
-            .build();
-        let never_sample = provider.get_tracer("never-sample", None);
-        b.iter(|| f(&never_sample));
-    });
-
+    rt.block_on(async {
+        group.bench_function("never-sample", |b| {
+            let span_processor =
+                BatchSpanProcessor::builder(VoidExporter, opentelemetry::runtime::Tokio)
+                    .with_max_queue_size(1000_000)
+                    .build();
+            let provider = sdktrace::TracerProvider::builder()
+                .with_config(sdktrace::config().with_sampler(sdktrace::Sampler::AlwaysOff))
+                .with_span_processor(span_processor)
+                .build();
+            let never_sample = provider.get_tracer("never-sample", None);
+            b.iter(|| f(&never_sample));
+            provider.force_flush();
+        });
+    })
     group.finish();
 }
 
