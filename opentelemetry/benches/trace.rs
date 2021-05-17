@@ -140,7 +140,7 @@ fn trace_benchmark_group<F: Fn(&sdktrace::Tracer)>(c: &mut Criterion, name: &str
             b.iter(|| f(&never_sample));
             provider.force_flush();
         });
-    })
+    });
     group.finish();
 }
 
