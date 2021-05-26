@@ -38,7 +38,7 @@ fn get_span_data() -> Vec<SpanData> {
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("BatchSpanProcessor");
-    group.sample_size(50);
+    group.sample_size(500);
 
     for task_num in [1, 2, 4, 8, 16, 32].iter() {
         group.bench_with_input(BenchmarkId::from_parameter(format!("with {} concurrent task", task_num)), task_num, |b, &task_num| {

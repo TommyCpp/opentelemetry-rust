@@ -212,7 +212,7 @@ impl SpanProcessor for SimpleSpanProcessor {
 /// [`tokio`]: https://tokio.rs
 /// [`async-std`]: https://async.rs
 pub struct BatchSpanProcessor {
-    message_sender: Mutex<mpsc::Sender<BatchMessage>>,
+    message_sender: crate::util::channel::Sender<BatchMessage>,
 }
 
 impl fmt::Debug for BatchSpanProcessor {
@@ -229,25 +229,18 @@ impl SpanProcessor for BatchSpanProcessor {
     }
 
     fn on_end(&self, span: SpanData) {
-        let result = self
-            .message_sender
-            .lock()
-            .map_err(|_| TraceError::Other("batch span processor mutex poisoned".into()))
-            .and_then(|mut sender| {
-                sender
-                    .try_send(BatchMessage::ExportSpan(span))
-                    .map_err(|err| TraceError::Other(err.into()))
-            });
-
-        if let Err(err) = result {
-            global::handle_error(err);
-        }
+        self.message_sender
+            .try_send(BatchMessage::ExportSpan(span));
+        // .map_err(|err| TraceError::Other(err.into()));
+        // if let Err(err) = result {
+        //     global::handle_error(err);
+        // }
     }
 
     fn force_flush(&self) -> TraceResult<()> {
-        let mut sender = self.message_sender.lock().map_err(|_| TraceError::from("When force flushing the BatchSpanProcessor, the message sender's lock has been poisoned"))?;
+        let mut sender = &self.message_sender;
         let (res_sender, res_receiver) = oneshot::channel();
-        sender.try_send(BatchMessage::Flush(Some(res_sender)))?;
+        sender.try_send(BatchMessage::Flush(Some(res_sender))).unwrap();
 
         futures::executor::block_on(res_receiver)
             .map_err(|err| TraceError::Other(err.into()))
@@ -255,9 +248,9 @@ impl SpanProcessor for BatchSpanProcessor {
     }
 
     fn shutdown(&mut self) -> TraceResult<()> {
-        let mut sender = self.message_sender.lock().map_err(|_| TraceError::from("When shutting down the BatchSpanProcessor, the message sender's lock has been poisoned"))?;
+        let mut sender = &self.message_sender;
         let (res_sender, res_receiver) = oneshot::channel();
-        sender.try_send(BatchMessage::Shutdown(res_sender))?;
+        sender.try_send(BatchMessage::Shutdown(res_sender)).unwrap();
 
         futures::executor::block_on(res_receiver)
             .map_err(|err| TraceError::Other(err.into()))
@@ -281,7 +274,7 @@ impl BatchSpanProcessor {
         where
             R: Runtime,
     {
-        let (message_sender, message_receiver) = mpsc::channel(config.max_queue_size);
+        let (message_sender, message_receiver) = crate::util::channel::bounded_channel(config.max_queue_size);
         let ticker = runtime
             .interval(config.scheduled_delay)
             .map(|_| BatchMessage::Flush(None));
@@ -363,7 +356,7 @@ impl BatchSpanProcessor {
 
         // Return batch processor with link to worker
         BatchSpanProcessor {
-            message_sender: Mutex::new(message_sender),
+            message_sender,
         }
     }
 
@@ -642,7 +635,7 @@ mod tests {
     impl<D, DS> Debug for BlockingExporter<D>
         where
             D: Fn(Duration) -> DS + 'static + Send + Sync,
-            DS: Future<Output = ()> + Send + Sync + 'static,
+            DS: Future<Output=()> + Send + Sync + 'static,
     {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.write_str("blocking exporter for testing")
@@ -653,7 +646,7 @@ mod tests {
     impl<D, DS> SpanExporter for BlockingExporter<D>
         where
             D: Fn(Duration) -> DS + 'static + Send + Sync,
-            DS: Future<Output = ()> + Send + Sync + 'static,
+            DS: Future<Output=()> + Send + Sync + 'static,
     {
         async fn export(&mut self, _batch: Vec<SpanData>) -> ExportResult {
             (self.delay_fn)(self.delay_for).await;
