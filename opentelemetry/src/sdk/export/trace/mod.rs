@@ -81,7 +81,7 @@ pub struct SpanData {
     /// Span status message
     pub status_message: Cow<'static, str>,
     /// Resource contains attributes representing an entity that produced this span.
-    pub resource: Option<Arc<sdk::Resource>>,
+    pub resource: Arc<sdk::Resource>,
     /// Instrumentation library that produced this span
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub instrumentation_lib: sdk::InstrumentationLibrary,
@@ -91,6 +91,7 @@ pub struct SpanData {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sdk::Resource;
     use crate::trace::{TraceFlags, TraceId, TraceState};
 
     #[test]
@@ -121,7 +122,7 @@ mod tests {
 
         let status_code = StatusCode::Ok;
         let status_message = "".into();
-        let resource = None;
+        let resource = Arc::new(Resource::empty());
 
         let span_data = SpanData {
             span_context,

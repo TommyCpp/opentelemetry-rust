@@ -75,11 +75,12 @@ impl ApiVersion {
 pub(crate) mod tests {
     use super::*;
     use opentelemetry::sdk;
-    use opentelemetry::sdk::InstrumentationLibrary;
+    use opentelemetry::sdk::{InstrumentationLibrary, Resource};
     use opentelemetry::{
         trace::{SpanContext, SpanId, SpanKind, StatusCode, TraceFlags, TraceId, TraceState},
         Key,
     };
+    use std::sync::Arc;
     use std::time::{Duration, SystemTime};
 
     fn get_traces() -> Vec<Vec<trace::SpanData>> {
@@ -117,7 +118,7 @@ pub(crate) mod tests {
             links,
             status_code: StatusCode::Ok,
             status_message: "".into(),
-            resource: None,
+            resource: Arc::new(Resource::empty()),
             instrumentation_lib: InstrumentationLibrary::new("component", None),
         }
     }

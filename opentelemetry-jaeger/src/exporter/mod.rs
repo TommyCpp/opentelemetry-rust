@@ -530,15 +530,16 @@ fn convert_otel_span_into_jaeger_span(
 fn build_process_tags(
     span_data: &trace::SpanData,
 ) -> Option<impl Iterator<Item = jaeger::Tag> + '_> {
-    span_data
-        .resource
-        .as_ref()
-        .filter(|resource| !resource.is_empty())
-        .map(|resource| {
-            resource
+    if span_data.resource.is_empty() {
+        None
+    } else {
+        Some(
+            span_data
+                .resource
                 .iter()
-                .map(|(k, v)| KeyValue::new(k.clone(), v.clone()).into())
-        })
+                .map(|(k, v)| KeyValue::new(k.clone(), v.clone()).into()),
+        )
+    }
 }
 
 fn build_span_tags(

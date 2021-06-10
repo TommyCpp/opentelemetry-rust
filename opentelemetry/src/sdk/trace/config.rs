@@ -3,7 +3,8 @@
 //! Configuration represents the global tracing configuration, overrides
 //! can be set for the default OpenTelemetry limits and Sampler.
 use crate::sdk::trace::span_limit::SpanLimits;
-use crate::{sdk, sdk::trace::Sampler, trace::IdGenerator};
+use crate::sdk::Resource;
+use crate::{sdk, sdk::trace::Sampler, trace::IdGenerator, Key};
 use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -23,7 +24,7 @@ pub struct Config {
     /// span limits
     pub span_limits: SpanLimits,
     /// Contains attributes representing an entity that produces telemetry.
-    pub resource: Option<Arc<sdk::Resource>>,
+    pub resource: Arc<sdk::Resource>,
 }
 
 impl Config {
@@ -77,8 +78,15 @@ impl Config {
 
     /// Specify the attributes representing the entity that produces telemetry
     pub fn with_resource(mut self, resource: sdk::Resource) -> Self {
-        self.resource = Some(Arc::new(resource));
+        self.resource = Arc::new(self.resource.merge(&resource));
         self
+    }
+
+    /// Return the service name defined as `service.name` in `Resource`
+    pub fn get_service_name(&self) -> String {
+        // As per spec, SDK MUST provide a value for service.name attribute in resource.
+        // So resource.get will always returns some values.
+        self.resource.get(Key::from_static_str("service.name")).unwrap().to_string()
     }
 }
 
@@ -89,7 +97,7 @@ impl Default for Config {
             sampler: Box::new(Sampler::ParentBased(Box::new(Sampler::AlwaysOn))),
             id_generator: Box::new(sdk::trace::IdGenerator::default()),
             span_limits: SpanLimits::default(),
-            resource: None,
+            resource: Arc::new(Resource::default()),
         };
 
         if let Some(max_attributes_per_span) = env::var("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT")

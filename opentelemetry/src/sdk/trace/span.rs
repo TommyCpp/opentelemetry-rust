@@ -193,7 +193,7 @@ impl Drop for Span {
 fn build_export_data(
     data: SpanData,
     span_context: SpanContext,
-    resource: Option<Arc<sdk::Resource>>,
+    resource: Arc<sdk::Resource>,
     tracer: &sdk::trace::Tracer,
 ) -> sdk::export::trace::SpanData {
     sdk::export::trace::SpanData {

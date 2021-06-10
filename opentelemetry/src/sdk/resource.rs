@@ -15,6 +15,7 @@
 //! [`TracerProvider`]: crate::trace::TracerProvider
 #[cfg(feature = "metrics")]
 use crate::labels;
+use crate::sdk::env::SdkProvidedResourceDetector;
 use crate::sdk::EnvResourceDetector;
 use crate::{Key, KeyValue, Value};
 #[cfg(feature = "serialize")]
@@ -25,6 +26,12 @@ use std::time::Duration;
 /// Describes an entity about which identifying information and metadata is exposed.
 ///
 /// Items are sorted by their key, and are only overwritten if the value is an empty string.
+///
+/// Note that there are some attributes that MUST be provided by SDK(see [spec]). The default resource will
+/// try to fetch them from enviroment variables. If's not available, it will fall back to a
+/// pre-defined values.
+///
+/// [spec]:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value
 #[cfg_attr(feature = "serialize", derive(Deserialize, Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Resource {
@@ -35,7 +42,10 @@ impl Default for Resource {
     fn default() -> Self {
         Self::from_detectors(
             Duration::from_secs(0),
-            vec![Box::new(EnvResourceDetector::new())],
+            vec![
+                Box::new(EnvResourceDetector::new()),
+                Box::new(SdkProvidedResourceDetector),
+            ],
         )
     }
 }
@@ -51,8 +61,8 @@ impl Resource {
     /// Create a new `Resource` from key value pairs.
     ///
     /// Values are de-duplicated by key, and the first key-value pair with a non-empty string value
-    /// will be retained
-    pub fn new<T: IntoIterator<Item = KeyValue>>(kvs: T) -> Self {
+    /// will be retained.
+    pub fn new<T: IntoIterator<Item=KeyValue>>(kvs: T) -> Self {
         let mut resource = Resource::empty();
 
         for kv in kvs.into_iter() {
@@ -64,7 +74,10 @@ impl Resource {
 
     /// Create a new `Resource` from resource detectors.
     ///
-    /// timeout will be applied to each detector.
+    /// Timeout will be applied to each detector.
+    ///
+    /// The `ResourceDetector`s will be called in order, and the attributes can be override
+    /// by another detector.
     pub fn from_detectors(timeout: Duration, detectors: Vec<Box<dyn ResourceDetector>>) -> Self {
         let mut resource = Resource::empty();
         for detector in detectors {
@@ -82,6 +95,8 @@ impl Resource {
     ///
     /// Keys from the `other` resource have priority over keys from this resource, even if the
     /// updated value is empty.
+    ///
+    /// Return the merged `Resource`.
     pub fn merge(&self, other: &Self) -> Self {
         if self.attrs.is_empty() {
             return other.clone();
@@ -116,6 +131,11 @@ impl Resource {
     /// Gets an iterator over the attributes of this resource, sorted by key.
     pub fn iter(&self) -> Iter<'_> {
         self.into_iter()
+    }
+
+    /// Retrieve the value from resource associate with given key.
+    pub fn get(&self, key: Key) -> Option<Value> {
+        self.iter().find(|(k, _v)| **k == key).map(|(_k, v)| v.clone())
     }
 
     /// Encoded labels
@@ -173,9 +193,9 @@ impl<'a> IntoIterator for &'a Resource {
 /// Implementations of this trait can be passed to
 /// the `Resource::from_detectors` function to generate a Resource from the merged information.
 pub trait ResourceDetector {
-    /// detect returns an initialized Resource based on gathered information.
+    /// `detect` returns an initialized Resource based on gathered information.
     ///
-    /// timeout is used in case the detection operation takes too much time.
+    /// Timeout is used in case the detection operation takes too much time.
     ///
     /// If source information to construct a Resource is inaccessible, an empty Resource should be returned
     ///
