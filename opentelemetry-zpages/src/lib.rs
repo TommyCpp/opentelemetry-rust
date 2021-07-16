@@ -29,7 +29,7 @@ mod trace;
 mod proto;
 mod transform;
 
-pub use trace::{span_processor::ZPagesSpanProcessor, tracez, TracezMessage, TracezResponse};
+pub use trace::{span_processor::ZPagesSpanProcessor, tracez, TracezQuerier, TracezResponse};
 
 #[macro_use]
 extern crate lazy_static;
