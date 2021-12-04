@@ -5,5 +5,14 @@ edition = "2018"
 publish = false
 
 [dependencies]
-opentelemetry = { path = "../../opentelemetry" }
-opentelemetry-datadog = { path = "../../opentelemetry-datadog", features = ["reqwest-blocking-client"] }
+opentelemetry = { version = "0.16.0", features = ["rt-tokio"] }
+opentelemetry-datadog = { version = "0.4.0", features = ["reqwest-client"] }
+tracing-opentelemetry = "0.16.0"
+tracing = "0.1.29"
+tracing-subscriber = "0.3"
+tokio = { version = "1.0", features = ["full"] }
+opentelemetry-http = { version = "0.5.0" }
+http = { version = "0.2.5" }
+bytes = "1"
+reqwest = { version = "0.11", default-features = false, features = ["blocking"] }
+async-trait = "0.1"
