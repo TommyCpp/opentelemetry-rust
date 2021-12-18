@@ -1,113 +1,127 @@
-#[macro_use]
-extern crate lazy_static;
-
+use futures_util::{Stream, StreamExt, Future};
 use hyper::{
-    header::CONTENT_TYPE,
+    body,
     service::{make_service_fn, service_fn},
-    Body, Method, Request, Response, Server,
+    Body, Request, Response, Server,
 };
+use once_cell::sync::Lazy;
 use opentelemetry::{
     global,
-    metrics::{BoundCounter, BoundValueRecorder},
+    metrics::{self, Meter, ValueRecorder, Counter},
+    sdk::{metrics::{selectors, PushController}},
     KeyValue,
 };
-use opentelemetry_prometheus::PrometheusExporter;
-use prometheus::{Encoder, TextEncoder};
-use std::convert::Infallible;
-use std::sync::Arc;
-use std::time::SystemTime;
+use opentelemetry_otlp::WithExportConfig;
+use tokio::task::JoinHandle;
+use std::time::{Duration, SystemTime};
+use opentelemetry::metrics::MetricsError;
+use opentelemetry::sdk::export::metrics::stdout;
 
-lazy_static! {
-    static ref HANDLER_ALL: [KeyValue; 1] = [KeyValue::new("handler", "all")];
+static PUSH_CONTROLLER: Lazy<PushController> = Lazy::new(|| init_meter().unwrap());
+static METER: Lazy<Meter> = Lazy::new(|| {
+    Lazy::force(&PUSH_CONTROLLER);
+    global::meter("abracadabra")
+});
+static HTTP_RECORDER: Lazy<ValueRecorder<u64>> = Lazy::new(|| {
+    METER.u64_value_recorder("hits.counter")
+        .with_description("hit counter")
+        .init()
+});
+static HTTP_REQ_HISTOGRAM: Lazy<ValueRecorder<f64>> = Lazy::new(|| {
+    METER.f64_value_recorder("value.duration")
+        .with_description("request latencies")
+        .init()
+});
+
+// Skip first immediate tick from tokio, not needed for async_std.
+fn delayed_interval(duration: Duration) -> impl Stream<Item=tokio::time::Instant> {
+    println!("call to delayed_interval with duration {:?}", duration);
+    opentelemetry::util::tokio_interval_stream(duration).skip(1).map(|i| {
+        println!("Interval passed");
+        i
+    })
 }
 
-async fn serve_req(
-    req: Request<Body>,
-    state: Arc<AppState>,
-) -> Result<Response<Body>, hyper::Error> {
-    println!("Receiving request at path {}", req.uri());
+fn spawn<T>(f: T) -> JoinHandle<T::Output>
+    where
+        T: Future + Send + 'static,
+        T::Output: Send + 'static,
+{
+    println!("Called spawn");
+    tokio::spawn(f)
+}
+
+fn init_meter() -> metrics::Result<PushController> {
+    opentelemetry_otlp::new_pipeline()
+        .metrics(spawn, delayed_interval)
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint("https://127.0.0.1:4317/")
+                .with_protocol(opentelemetry_otlp::Protocol::Grpc),
+        )
+        .with_aggregator_selector(selectors::simple::Selector::Inexpensive)
+        .with_period(Duration::from_secs(10))
+        .with_resource(vec![
+            KeyValue::new("service.name", "otlp-test"),
+            KeyValue::new("service.namespace", "otlp-test"),
+            KeyValue::new("service.instance.id", "test"),
+            KeyValue::new("service.version", "0.1.0"),
+        ])
+        .build()
+    // Ok(opentelemetry::sdk::export::metrics::stdout(tokio::spawn, delayed_interval)
+    //     .with_formatter(|batch| {
+    //         serde_json::to_value(batch)
+    //             .map(|value| value.to_string())
+    //             .map_err(|err| MetricsError::Other(err.to_string()))
+    //     })
+    //     .init())
+}
+
+fn start_metrics() {
+    Lazy::force(&METER);
+}
+
+async fn serve_req(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     let request_start = SystemTime::now();
 
-    state.http_counter.add(1);
+    let attributes = &[
+        KeyValue::new("method", req.method().to_string()),
+        KeyValue::new("path", req.uri().path().to_owned()),
+    ];
 
-    let response = match (req.method(), req.uri().path()) {
-        (&Method::GET, "/metrics") => {
-            let mut buffer = vec![];
-            let encoder = TextEncoder::new();
-            let metric_families = state.exporter.registry().gather();
-            encoder.encode(&metric_families, &mut buffer).unwrap();
-            state.http_body_gauge.record(buffer.len() as u64);
-
+    let response = match body::to_bytes(req.into_body()).await {
+        Ok(bytes) => {
             Response::builder()
                 .status(200)
-                .header(CONTENT_TYPE, encoder.format_type())
-                .body(Body::from(buffer))
+                .body(Body::from(bytes))
                 .unwrap()
         }
-        (&Method::GET, "/") => Response::builder()
-            .status(200)
-            .body(Body::from("Hello World"))
-            .unwrap(),
-        _ => Response::builder()
-            .status(404)
-            .body(Body::from("Missing Page"))
+        Err(e) => Response::builder()
+            .status(500)
+            .body(Body::from(e.to_string()))
             .unwrap(),
     };
 
-    state
-        .http_req_histogram
-        .record(request_start.elapsed().map_or(0.0, |d| d.as_secs_f64()));
+    // let duration = request_start.elapsed().unwrap_or_default();
+    // HTTP_REQ_HISTOGRAM.record(duration.as_secs_f64(), attributes);
+    HTTP_RECORDER.record(1, attributes);
+
     Ok(response)
 }
 
-struct AppState {
-    exporter: PrometheusExporter,
-    http_counter: BoundCounter<u64>,
-    http_body_gauge: BoundValueRecorder<u64>,
-    http_req_histogram: BoundValueRecorder<f64>,
-}
-
 #[tokio::main]
-pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let exporter = opentelemetry_prometheus::exporter().init();
+async fn main() {
+    start_metrics();
 
-    let meter = global::meter("ex.com/hyper");
-    let state = Arc::new(AppState {
-        exporter,
-        http_counter: meter
-            .u64_counter("example.http_requests_total")
-            .with_description("Total number of HTTP requests made.")
-            .init()
-            .bind(HANDLER_ALL.as_ref()),
-        http_body_gauge: meter
-            .u64_value_recorder("example.http_response_size_bytes")
-            .with_description("The metrics HTTP response sizes in bytes.")
-            .init()
-            .bind(HANDLER_ALL.as_ref()),
-        http_req_histogram: meter
-            .f64_value_recorder("example.http_request_duration_seconds")
-            .with_description("The HTTP request latencies in seconds.")
-            .init()
-            .bind(HANDLER_ALL.as_ref()),
-    });
-
-    // For every connection, we must make a `Service` to handle all
-    // incoming HTTP requests on said connection.
-    let make_svc = make_service_fn(move |_conn| {
-        let state = state.clone();
-        // This is the `Service` that will handle the connection.
-        // `service_fn` is a helper to convert a function that
-        // returns a Response into a `Service`.
-        async move { Ok::<_, Infallible>(service_fn(move |req| serve_req(req, state.clone()))) }
-    });
-
-    let addr = ([127, 0, 0, 1], 3000).into();
-
-    let server = Server::bind(&addr).serve(make_svc);
-
+    let addr = ([127, 0, 0, 1], 9898).into();
     println!("Listening on http://{}", addr);
 
-    server.await?;
+    let serve_future = Server::bind(&addr).serve(make_service_fn(|_| async {
+        Ok::<_, hyper::Error>(service_fn(serve_req))
+    }));
 
-    Ok(())
+    if let Err(err) = serve_future.await {
+        eprintln!("server error: {}", err);
+    }
 }
