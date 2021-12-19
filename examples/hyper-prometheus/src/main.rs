@@ -15,15 +15,15 @@ use opentelemetry_otlp::WithExportConfig;
 use tokio::task::JoinHandle;
 use std::time::{Duration, SystemTime};
 use opentelemetry::metrics::MetricsError;
-use opentelemetry::sdk::export::metrics::stdout;
+use opentelemetry::sdk::export::metrics::{ExportKindSelector, stdout};
 
 static PUSH_CONTROLLER: Lazy<PushController> = Lazy::new(|| init_meter().unwrap());
 static METER: Lazy<Meter> = Lazy::new(|| {
     Lazy::force(&PUSH_CONTROLLER);
     global::meter("abracadabra")
 });
-static HTTP_RECORDER: Lazy<ValueRecorder<u64>> = Lazy::new(|| {
-    METER.u64_value_recorder("hits.counter")
+static HTTP_RECORDER: Lazy<Counter<u64>> = Lazy::new(|| {
+    METER.u64_counter("hits.counter")
         .with_description("hit counter")
         .init()
 });
@@ -60,7 +60,7 @@ fn init_meter() -> metrics::Result<PushController> {
                 .with_endpoint("https://127.0.0.1:4317/")
                 .with_protocol(opentelemetry_otlp::Protocol::Grpc),
         )
-        .with_aggregator_selector(selectors::simple::Selector::Inexpensive)
+        .with_aggregator_selector(selectors::simple::Selector::Exact)
         .with_period(Duration::from_secs(10))
         .with_resource(vec![
             KeyValue::new("service.name", "otlp-test"),
@@ -105,7 +105,7 @@ async fn serve_req(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     // let duration = request_start.elapsed().unwrap_or_default();
     // HTTP_REQ_HISTOGRAM.record(duration.as_secs_f64(), attributes);
-    HTTP_RECORDER.record(1, attributes);
+    HTTP_RECORDER.add(1, attributes);
 
     Ok(response)
 }
