@@ -39,6 +39,7 @@ use {
     http::{
         header::{HeaderName, HeaderValue, CONTENT_TYPE},
         Method, Uri,
+        uri::PathAndQuery,
     },
     opentelemetry_http::HttpClient,
     opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest as ProstRequest,
@@ -63,6 +64,8 @@ use opentelemetry::{
 };
 
 use async_trait::async_trait;
+
+const TRACE_PATH: &str = "/v1/traces";
 
 impl OtlpPipeline {
     /// Create a OTLP tracing pipeline.
@@ -317,15 +320,15 @@ impl SpanExporter {
         let endpoint = TonicChannel::from_shared(config.endpoint.clone())?;
 
         #[cfg(feature = "tls")]
-        let channel = match tonic_config.tls_config.as_ref() {
+            let channel = match tonic_config.tls_config.as_ref() {
             Some(tls_config) => endpoint.tls_config(tls_config.clone())?,
             None => endpoint,
         }
-        .timeout(config.timeout)
-        .connect_lazy();
+            .timeout(config.timeout)
+            .connect_lazy();
 
         #[cfg(not(feature = "tls"))]
-        let channel = endpoint.timeout(config.timeout).connect_lazy();
+            let channel = endpoint.timeout(config.timeout).connect_lazy();
 
         SpanExporter::from_tonic_channel(config, tonic_config, channel)
     }
@@ -383,15 +386,29 @@ impl SpanExporter {
     /// Builds a new span exporter with the given configuration
     #[cfg(feature = "http-proto")]
     pub fn new_http(config: ExportConfig, http_config: HttpConfig) -> Result<Self, crate::Error> {
-        let url: Uri = config
+        let mut parts = config
             .endpoint
-            .parse()
+            .parse::<Uri>()
+            .map_err::<crate::Error, _>(Into::into)?
+            .into_parts();
+
+        parts.path_and_query = Some(parts.path_and_query
+            .map(|path| {
+                if path.path() == "/" && path.query().is_none() {
+                    PathAndQuery::from_static(TRACE_PATH)
+                } else {
+                    path
+                }
+            })
+            .unwrap_or(PathAndQuery::from_static(TRACE_PATH)));
+
+        let uri = Uri::from_parts(parts)
             .map_err::<crate::Error, _>(Into::into)?;
 
         Ok(SpanExporter::Http {
             trace_exporter: http_config.client,
             timeout: config.timeout,
-            collector_endpoint: url,
+            collector_endpoint: uri,
             headers: http_config.headers,
         })
     }
@@ -504,6 +521,41 @@ impl opentelemetry::sdk::export::trace::SpanExporter for SpanExporter {
                 } else {
                     Err(crate::Error::NoHttpClient.into())
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "http-proto")]
+    use crate::{exporter::http::HttpConfig, ExportConfig, SpanExporter};
+
+
+    #[cfg(feature = "http-proto")]
+    #[test]
+    fn test_set_trace_path() {
+        // user input, expected
+        let test_cases = vec![
+            ("http://localhost:8080", "http://localhost:8080/v1/traces"),
+            ("https://localhost", "https://localhost/v1/traces"),
+            ("http://localhost/custom/path", "http://localhost/custom/path"),
+            ("http://localhost?custom=query", "http://localhost?custom=query"),
+        ];
+
+        for test_case in test_cases.into_iter() {
+            let exporter = SpanExporter::new_http(ExportConfig {
+                endpoint: test_case.0.to_string(),
+                ..Default::default()
+            }, HttpConfig::default())
+                .unwrap();
+
+
+            if let SpanExporter::Http {
+                collector_endpoint, ..
+            } = exporter
+            {
+                assert_eq!(collector_endpoint, test_case.1);
             }
         }
     }

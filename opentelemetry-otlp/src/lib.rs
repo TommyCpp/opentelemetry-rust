@@ -164,19 +164,19 @@
 //! | TLS library | rustls | OpenSSL |
 //! | Supported .proto generator | [`prost`](https://crates.io/crates/prost) | [`prost`](https://crates.io/crates/prost), [`protobuf`](https://crates.io/crates/protobuf) |
 #![warn(
-    future_incompatible,
-    missing_debug_implementations,
-    missing_docs,
-    nonstandard_style,
-    rust_2018_idioms,
-    unreachable_pub,
-    unused
+future_incompatible,
+missing_debug_implementations,
+missing_docs,
+nonstandard_style,
+rust_2018_idioms,
+unreachable_pub,
+unused
 )]
 #![allow(elided_lifetimes_in_paths)]
 #![cfg_attr(
-    docsrs,
-    feature(doc_cfg, doc_auto_cfg),
-    deny(rustdoc::broken_intra_doc_links)
+docsrs,
+feature(doc_cfg, doc_auto_cfg),
+deny(rustdoc::broken_intra_doc_links)
 )]
 #![cfg_attr(test, deny(warnings))]
 
@@ -287,6 +287,11 @@ pub enum Error {
     #[error("invalid URI {0}")]
     InvalidUri(#[from] http::uri::InvalidUri),
 
+    /// Wrap the [`tonic::codegen::http::uri::InvalidUriParts`] error
+    #[cfg(any(feature = "grpc-tonic", feature = "http-proto"))]
+    #[error("invalid URI {0}")]
+    InvalidUriParts(#[from] http::uri::InvalidUriParts),
+
     /// Wrap type for [`tonic::Status`]
     #[cfg(feature = "grpc-tonic")]
     #[error("the grpc server returns error ({code}): {message}")]
@@ -305,7 +310,7 @@ pub enum Error {
     /// Http requests failed because no http client is provided.
     #[cfg(feature = "http-proto")]
     #[error(
-        "no http client, you must select one from features or provide your own implementation"
+    "no http client, you must select one from features or provide your own implementation"
     )]
     NoHttpClient,
 
