@@ -16,12 +16,10 @@ lazy_static::lazy_static! {
 #[non_exhaustive]
 pub enum Error {
     #[cfg(feature = "trace")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
     #[error(transparent)]
     /// Failed to export traces.
     Trace(#[from] TraceError),
     #[cfg(feature = "metrics")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
     #[error(transparent)]
     /// An issue raised by the metrics module.
     Metric(#[from] MetricsError),
@@ -46,10 +44,8 @@ pub fn handle_error<T: Into<Error>>(err: T) {
         Ok(handler) if handler.is_some() => (handler.as_ref().unwrap().0)(err.into()),
         _ => match err.into() {
             #[cfg(feature = "metrics")]
-            #[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
             Error::Metric(err) => eprintln!("OpenTelemetry metrics error occurred. {}", err),
             #[cfg(feature = "trace")]
-            #[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
             Error::Trace(err) => eprintln!("OpenTelemetry trace error occurred. {}", err),
             Error::Other(err_msg) => eprintln!("OpenTelemetry error occurred. {}", err_msg),
         },

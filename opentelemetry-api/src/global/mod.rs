@@ -148,15 +148,12 @@ mod trace;
 
 pub use error_handler::{handle_error, set_error_handler, Error};
 #[cfg(feature = "metrics")]
-#[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
 pub use metrics::{
     meter, meter_provider, meter_with_version, set_meter_provider, GlobalMeterProvider,
 };
 #[cfg(feature = "trace")]
-#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub use propagation::{get_text_map_propagator, set_text_map_propagator};
 #[cfg(feature = "trace")]
-#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub use trace::{
     set_tracer_provider, shutdown_tracer_provider, tracer, tracer_provider, BoxedSpan, BoxedTracer,
     GlobalTracerProvider, ObjectSafeTracer, ObjectSafeTracerProvider,

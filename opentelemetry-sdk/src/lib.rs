@@ -18,7 +18,7 @@
 #![allow(clippy::needless_doctest_main)]
 #![cfg_attr(
     docsrs,
-    feature(doc_cfg, doc_auto_cfg),
+    doc_auto_cfg
     deny(rustdoc::broken_intra_doc_links)
 )]
 #![doc(
@@ -29,10 +29,8 @@
 pub mod export;
 mod instrumentation;
 #[cfg(feature = "metrics")]
-#[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
 pub mod metrics;
 #[cfg(feature = "trace")]
-#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub mod propagation;
 pub mod resource;
 pub mod runtime;
@@ -40,7 +38,6 @@ pub mod runtime;
 #[doc(hidden)]
 pub mod testing;
 #[cfg(feature = "trace")]
-#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub mod trace;
 #[doc(hidden)]
 pub mod util;

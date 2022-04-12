@@ -7,15 +7,16 @@
 //! and exposes methods for creating and activating new `Spans`.
 //!
 //! Docs: <https://github.com/open-telemetry/opentelemetry-specification/blob/v1.3.0/specification/trace/api.md#tracer>
-use crate::trace::SpanLimits;
 use crate::{
     trace::{
         provider::{TracerProvider, TracerProviderInner},
         span::{Span, SpanData},
         Config, EvictedHashMap, EvictedQueue,
+        SpanLimits,
     },
     InstrumentationLibrary,
 };
+
 use opentelemetry_api::trace::{
     Link, SamplingDecision, SamplingResult, SpanBuilder, SpanContext, SpanId, SpanKind,
     TraceContextExt, TraceFlags, TraceId, TraceState,

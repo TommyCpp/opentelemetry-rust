@@ -58,17 +58,14 @@ pub mod testing;
 pub use common::{Array, ExportError, InstrumentationLibrary, Key, KeyValue, Value};
 
 #[cfg(feature = "metrics")]
-#[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
 pub mod attributes;
 
 #[cfg(feature = "metrics")]
-#[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
 pub mod metrics;
 
 pub mod propagation;
 
 #[cfg(feature = "trace")]
-#[cfg_attr(docsrs, doc(cfg(feature = "trace")))]
 pub mod trace;
 
 #[doc(hidden)]

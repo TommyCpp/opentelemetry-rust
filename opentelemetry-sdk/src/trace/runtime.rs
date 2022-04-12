@@ -68,7 +68,6 @@ impl TrySend for tokio::sync::mpsc::Sender<BatchMessage> {
 }
 
 #[cfg(feature = "rt-tokio")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio")))]
 impl TraceRuntime for Tokio {
     type Receiver = tokio_stream::wrappers::ReceiverStream<BatchMessage>;
     type Sender = tokio::sync::mpsc::Sender<BatchMessage>;
@@ -83,7 +82,6 @@ impl TraceRuntime for Tokio {
 }
 
 #[cfg(feature = "rt-tokio-current-thread")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio-current-thread")))]
 impl TraceRuntime for TokioCurrentThread {
     type Receiver = tokio_stream::wrappers::ReceiverStream<BatchMessage>;
     type Sender = tokio::sync::mpsc::Sender<BatchMessage>;
@@ -108,7 +106,6 @@ impl TrySend for async_std::channel::Sender<BatchMessage> {
 }
 
 #[cfg(feature = "rt-async-std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-async-std")))]
 impl TraceRuntime for AsyncStd {
     type Receiver = async_std::channel::Receiver<BatchMessage>;
     type Sender = async_std::channel::Sender<BatchMessage>;

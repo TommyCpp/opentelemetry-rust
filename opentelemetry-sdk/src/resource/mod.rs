@@ -134,7 +134,6 @@ impl Resource {
 
     /// Encoded attributes
     #[cfg(feature = "metrics")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "metrics")))]
     pub fn encoded(&self, encoder: &dyn attributes::Encoder) -> String {
         encoder.encode(&mut self.into_iter())
     }

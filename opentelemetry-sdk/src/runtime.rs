@@ -44,12 +44,10 @@ pub trait Runtime: Clone + Send + Sync + 'static {
 
 /// Runtime implementation, which works with Tokio's multi thread runtime.
 #[cfg(feature = "rt-tokio")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio")))]
 #[derive(Debug, Clone)]
 pub struct Tokio;
 
 #[cfg(feature = "rt-tokio")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio")))]
 impl Runtime for Tokio {
     type Interval = tokio_stream::wrappers::IntervalStream;
     type Delay = tokio::time::Sleep;
@@ -69,12 +67,10 @@ impl Runtime for Tokio {
 
 /// Runtime implementation, which works with Tokio's current thread runtime.
 #[cfg(feature = "rt-tokio-current-thread")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio-current-thread")))]
 #[derive(Debug, Clone)]
 pub struct TokioCurrentThread;
 
 #[cfg(feature = "rt-tokio-current-thread")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-tokio-current-thread")))]
 impl Runtime for TokioCurrentThread {
     type Interval = tokio_stream::wrappers::IntervalStream;
     type Delay = tokio::time::Sleep;
@@ -106,12 +102,10 @@ impl Runtime for TokioCurrentThread {
 
 /// Runtime implementation, which works with async-std.
 #[cfg(feature = "rt-async-std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-async-std")))]
 #[derive(Debug, Clone)]
 pub struct AsyncStd;
 
 #[cfg(feature = "rt-async-std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rt-async-std")))]
 impl Runtime for AsyncStd {
     type Interval = async_std::stream::Interval;
     type Delay = BoxFuture<'static, ()>;
