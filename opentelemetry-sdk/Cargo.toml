@@ -59,3 +59,7 @@ required-features = ["metrics"]
 name = "ddsketch"
 harness = false
 required-features = ["metrics"]
+
+[[bench]]
+name = "sampling"
+harness = false
