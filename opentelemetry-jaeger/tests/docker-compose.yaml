@@ -15,6 +15,6 @@ services:
       OTEL_TEST_JAEGER_AGENT_ENDPOINT: "jaeger:6831"
       OTEL_TEST_JAEGER_ENDPOINT: "http://jaeger:16685"
     command: [ "cargo", "test", "--package", "opentelemetry-jaeger", "--test", "integration_test",
-               "--features=integration_test", "tests::integration_test", "--", "--exact" ]
+               "--features=integration_test", "tests::integration_test", "--", "--exact", "--ignored" ]
     depends_on:
       - jaeger

@@ -47,7 +47,7 @@ mod tests {
     // Alternative you can run scripts/integration-test.sh from project root path.
     //
     #[test]
-    #[ignore]
+    #[ignore] // ignore this when running unit tests
     fn integration_test() {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
