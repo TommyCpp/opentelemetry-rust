@@ -2,13 +2,13 @@ name: integration tests
 
 on:
   pull_request:
-    types: [ labeled ]
+    types: [ labeled, synchronize, opened, reopened ]
 
 jobs:
   integration_tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ github.event.label.name == 'integration_tests' }}
+    if: ${{ github.event.label.name == 'integration_tests' }} || contains(github.event.pull_request.labels.*.name, 'integration_tests')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
