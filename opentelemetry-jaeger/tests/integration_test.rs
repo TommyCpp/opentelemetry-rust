@@ -44,7 +44,7 @@ mod tests {
     // This tests requires a jaeger agent running on the localhost.
     // You can override the agent end point using OTEL_TEST_JAEGER_AGENT_ENDPOINT env var
     // You can override the query API endpoint using OTEL_TEST_JAEGER_ENDPOINT env var
-    // Alternative you can run scripts/integration-test.sh from project root path.
+    // Alternative you can run scripts/integration-tests.sh from project root path.
     //
     #[test]
     #[ignore] // ignore this when running unit tests
