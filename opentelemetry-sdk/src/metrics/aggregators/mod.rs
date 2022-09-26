@@ -41,6 +41,11 @@ pub fn range_test(number: &Number, descriptor: &Descriptor) -> Result<()> {
     Ok(())
 }
 
+/// AggregatorBuilder is a factory for aggregators.
+pub trait AggregatorBuilder: Send + Sync + fmt::Debug {
+    fn build(&self) -> Arc<dyn Aggregator + Send + Sync>;
+}
+
 /// Aggregator implements a specific aggregation behavior, i.e., a behavior to
 /// track a sequence of updates to an instrument. Sum-only instruments commonly
 /// use a simple Sum aggregator, but for the distribution instruments

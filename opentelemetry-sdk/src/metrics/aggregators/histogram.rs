@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use crate::export::metrics::aggregation::{
     Aggregation, AggregationKind, Buckets, Count, Histogram, Sum,
 };
@@ -9,6 +10,28 @@ use opentelemetry_api::metrics::{MetricsError, Result};
 use opentelemetry_api::Context;
 use std::mem;
 use std::sync::{Arc, RwLock};
+use crate::metrics::aggregators::AggregatorBuilder;
+
+/// Create a new [`HistogramAggregator`] with the custom boundaries.
+// todo: give an example of how custom boundaries are used
+pub struct HistogramBuilder<'a> {
+    boundaries: &'a [f64]
+}
+
+impl<'a> Debug for HistogramBuilder<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HistogramBuilder")
+            .field("boundaries", &self.boundaries)
+            .finish()
+    }
+}
+
+impl<'a> AggregatorBuilder for HistogramBuilder<'a> {
+
+    fn build(&self) -> Arc<dyn Aggregator + Send + Sync>{
+        Arc::new(histogram(self.boundaries))
+    }
+}
 
 /// Create a new histogram for the given descriptor with the given boundaries
 pub fn histogram(boundaries: &[f64]) -> HistogramAggregator {

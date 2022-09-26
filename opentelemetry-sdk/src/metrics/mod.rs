@@ -22,12 +22,15 @@ use std::{
     hash::{Hash, Hasher},
     sync::{Arc, Mutex},
 };
+use crate::metrics::aggregators::AggregatorBuilder;
+
 pub mod aggregators;
 pub mod controllers;
 pub mod processors;
 pub mod registry;
 pub mod sdk_api;
 pub mod selectors;
+pub mod view;
 
 /// Creates a new accumulator builder
 pub fn accumulator(processor: Arc<dyn Processor + Send + Sync>) -> Accumulator {
@@ -111,16 +114,13 @@ struct AccumulatorCore {
     /// The current epoch number. It is incremented in `collect`.
     current_epoch: AtomicNumber,
 
-    /// The configured processor.
-    processor: Arc<dyn Processor + Send + Sync>,
 }
 
 impl AccumulatorCore {
-    fn new(processor: Arc<dyn Processor + Send + Sync>) -> Self {
+    fn new(_: Arc<dyn Processor + Send + Sync>) -> Self {
         AccumulatorCore {
             current: dashmap::DashMap::new(),
             current_epoch: NumberKind::U64.zero().to_atomic(),
-            processor,
             callbacks: Default::default(),
         }
     }
@@ -302,6 +302,8 @@ impl sdk_api::InstrumentCore for AsyncInstrument {
 struct BaseInstrument {
     meter: Accumulator,
     descriptor: Descriptor,
+
+    aggregation_builder: Arc<dyn AggregatorBuilder>,
 }
 
 impl BaseInstrument {
@@ -326,18 +328,8 @@ impl BaseInstrument {
             collected_count: NumberKind::U64.zero().to_atomic(),
             attributes: AttributeSet::from_attributes(kvs.iter().cloned()),
             instrument: self.clone(),
-            current: self
-                .meter
-                .0
-                .processor
-                .aggregator_selector()
-                .aggregator_for(&self.descriptor),
-            checkpoint: self
-                .meter
-                .0
-                .processor
-                .aggregator_selector()
-                .aggregator_for(&self.descriptor),
+            current: Some(self.aggregation_builder.build()),
+            checkpoint: Some(self.aggregation_builder.build()),
         });
         current.insert(map_key, record.clone());
 

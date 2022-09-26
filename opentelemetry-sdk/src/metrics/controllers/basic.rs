@@ -13,6 +13,7 @@ use opentelemetry_api::{
     Context, InstrumentationLibrary,
 };
 
+use crate::metrics::view::View;
 use crate::{
     export::metrics::{
         Checkpointer, CheckpointerFactory, InstrumentationLibraryReader, LockedCheckpointer,
@@ -52,6 +53,7 @@ where
         collect_period: None,
         collect_timeout: None,
         push_timeout: None,
+        views: vec![]
     }
 }
 
@@ -81,6 +83,7 @@ struct ControllerInner {
     collect_timeout: Duration,
     push_timeout: Duration,
     collected_time: Mutex<Option<SystemTime>>,
+    views: Vec<View>,
 }
 
 enum WorkerMessage {
@@ -300,6 +303,21 @@ impl MeterProvider for BasicController {
         version: Option<&'static str>,
         schema_url: Option<&'static str>,
     ) -> Meter {
+        // select applicable view from the meter provider's view pool
+        let applicable_views = self.0.views.iter().filter(|&&view| {
+            let mut is_match = true;
+            if let Some(view_meter_name) = view.selector.meter_name {
+                is_match = is_match && view_meter_name == name;
+            }
+            if let (Some(view_meter_version), Some(meter_version)) = (view.selector.meter_version, version) {
+                is_match = is_match && view_meter_version == meter_version;
+            }
+            if let (Some(view_meter_schema_url), Some(meter_schema_url)) = (view.selector.meter_schema_url, schema_url) {
+                is_match = is_match && view_meter_schema_url == meter_schema_url;
+            }
+            is_match
+        }).cloned().collect();
+
         self.0
             .meters
             .lock()
@@ -393,6 +411,7 @@ pub struct BasicControllerBuilder {
     collect_period: Option<Duration>,
     collect_timeout: Option<Duration>,
     push_timeout: Option<Duration>,
+    views: Vec<View>,
 }
 
 impl BasicControllerBuilder {
@@ -442,6 +461,27 @@ impl BasicControllerBuilder {
         self
     }
 
+    /// Add a view to configure how to aggregate and export metrics for a instrument.
+    ///
+    /// See [`View`] for more information.
+    ///
+    /// ```rust
+    /// # use opentelemetry_sdk::metrics::controllers::BasicControllerBuilder;
+    /// # use opentelemetry_sdk::metrics::view::{InstrumentSelector, View};
+    /// let _ = BasicControllerBuilder::default()
+    ///         .add_view(
+    ///             View::new()
+    ///                 .with_name("view_1")
+    ///                 .with_description("this is a description for the a metric stream")
+    ///                 .with_selector(InstrumentSelector::new().with_instrument_name("instrument_1"))
+    ///         )
+    ///         .build();
+    /// ```
+    pub fn add_view(mut self, view: View) -> Self {
+        self.views.push(view);
+        self
+    }
+
     /// Creates a new basic controller.
     pub fn build(self) -> BasicController {
         BasicController(Arc::new(ControllerInner {
@@ -454,6 +494,7 @@ impl BasicControllerBuilder {
             collect_timeout: self.collect_timeout.unwrap_or(DEFAULT_PERIOD),
             push_timeout: self.push_timeout.unwrap_or(DEFAULT_PERIOD),
             collected_time: Default::default(),
+            views: self.views,
         }))
     }
 }

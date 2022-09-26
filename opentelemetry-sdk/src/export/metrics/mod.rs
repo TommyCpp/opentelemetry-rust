@@ -2,6 +2,7 @@
 
 use core::fmt;
 use std::{sync::Arc, time::SystemTime};
+use std::collections::HashMap;
 
 use opentelemetry_api::{attributes, metrics::Result, Context, InstrumentationLibrary};
 
@@ -16,6 +17,7 @@ pub mod aggregation;
 mod stdout;
 
 pub use stdout::{stdout, ExportLine, ExportNumeric, StdoutExporter, StdoutExporterBuilder};
+use crate::metrics::view::View;
 
 /// AggregatorSelector supports selecting the kind of `Aggregator` to use at
 /// runtime for a specific metric instrument.
