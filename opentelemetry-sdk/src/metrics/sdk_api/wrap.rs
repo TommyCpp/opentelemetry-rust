@@ -3,8 +3,8 @@ use crate::metrics::sdk_api::{
     AsyncInstrumentCore, Descriptor, InstrumentKind, Number, NumberKind, SyncInstrumentCore,
 };
 use opentelemetry_api::metrics::{
-    AsyncCounter, AsyncUpDownCounter, ObservableUpDownCounter, SyncCounter, SyncHistogram,
-    SyncUpDownCounter, UpDownCounter,
+    AsyncCounter, AsyncUpDownCounter, ObservableUpDownCounter, SyncCounter,
+    SyncHistogram, SyncUpDownCounter, UpDownCounter,
 };
 use opentelemetry_api::KeyValue;
 use opentelemetry_api::{
@@ -73,13 +73,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<Counter<u64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Counter,
-            NumberKind::U64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Counter,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            InstrumentKind::Counter.default_aggregator_builder(),
+        )?;
 
         Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -90,13 +93,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<Counter<f64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Counter,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Counter,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::Counter.default_aggregator_builder(),
+        )?;
 
         Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -107,13 +113,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableCounter<u64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Counter,
-            NumberKind::U64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::CounterObserver,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            InstrumentKind::CounterObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
             instrument,
@@ -126,13 +135,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableCounter<f64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Counter,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::CounterObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::CounterObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
             instrument,
@@ -145,13 +157,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<UpDownCounter<i64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::UpDownCounter,
-            NumberKind::I64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounter,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            InstrumentKind::UpDownCounter.default_aggregator_builder(),
+        )?;
 
         Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -162,13 +177,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<UpDownCounter<f64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::UpDownCounter,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounter,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::UpDownCounter.default_aggregator_builder(),
+        )?;
 
         Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -179,13 +197,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableUpDownCounter<i64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::UpDownCounterObserver,
-            NumberKind::I64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounterObserver,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            InstrumentKind::UpDownCounterObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
             instrument,
@@ -198,13 +219,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableUpDownCounter<f64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::UpDownCounterObserver,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounterObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::UpDownCounterObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
             instrument,
@@ -217,13 +241,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableGauge<u64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::GaugeObserver,
-            NumberKind::U64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            InstrumentKind::GaugeObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
     }
@@ -234,13 +261,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableGauge<i64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::GaugeObserver,
-            NumberKind::I64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            InstrumentKind::GaugeObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
     }
@@ -251,13 +281,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<ObservableGauge<f64>> {
-        let instrument = self.0.new_async_instrument(Descriptor::new(
-            name,
-            InstrumentKind::GaugeObserver,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::GaugeObserver.default_aggregator_builder(),
+        )?;
 
         Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
     }
@@ -268,13 +301,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<Histogram<f64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Histogram,
-            NumberKind::F64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            InstrumentKind::Histogram.default_aggregator_builder(),
+        )?;
 
         Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -285,13 +321,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<Histogram<u64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Histogram,
-            NumberKind::U64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            InstrumentKind::Histogram.default_aggregator_builder(),
+        )?;
 
         Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
     }
@@ -302,13 +341,16 @@ impl InstrumentProvider for MeterImpl {
         description: Option<String>,
         unit: Option<Unit>,
     ) -> Result<Histogram<i64>> {
-        let instrument = self.0.new_sync_instrument(Descriptor::new(
-            name,
-            InstrumentKind::Histogram,
-            NumberKind::I64,
-            description,
-            unit,
-        ))?;
+        let instrument = self.0.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            InstrumentKind::Histogram.default_aggregator_builder(),
+        )?;
 
         Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
     }

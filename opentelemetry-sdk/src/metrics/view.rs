@@ -1,5 +1,6 @@
 //! A `View` provides SDK users with the flexibility to customize the metrics that are output by the
 //! SDK. Here are some examples when a View might be needed:
+//!
 //! - Customize which Instruments are to be processed/ignored. For example, an instrumented library
 //! can provide both temperature and humidity, but the application developer might only want temperature.
 //!
@@ -20,6 +21,9 @@ use opentelemetry_api::metrics::Unit;
 use opentelemetry_api::Key;
 use std::sync::Arc;
 
+/// Select instruments by name, kind, unit or meter name, version and schema_url.
+///
+/// Note that only the instrument that meets **all** condition will be selected.
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct InstrumentSelector {
     pub(crate) instrument_kind: Option<InstrumentKind>,
@@ -31,31 +35,37 @@ pub struct InstrumentSelector {
 }
 
 impl InstrumentSelector {
+    /// Select instruments by its kind. See [`InstrumentKind`] for more information.
     pub fn with_instrument_kind(mut self, instrument_kind: InstrumentKind) -> Self {
         self.instrument_kind = Some(instrument_kind);
         self
     }
 
-    pub fn with_instrument_name(mut self, instrument_name: String) -> Self {
-        self.instrument_name = Some(instrument_name);
+    /// Select instruments by its name.
+    pub fn with_instrument_name<T: Into<String>>(mut self, instrument_name: T) -> Self {
+        self.instrument_name = Some(instrument_name.into());
         self
     }
 
+    /// Select instruments by its unit.
     pub fn with_instrument_unit(mut self, instrument_unit: Unit) -> Self {
         self.instrument_unit = Some(instrument_unit);
         self
     }
 
+    /// Select instruments by its meter name.
     pub fn with_meter_name(mut self, meter_name: String) -> Self {
         self.meter_name = Some(meter_name);
         self
     }
 
+    /// Select instruments by its meter version.
     pub fn with_meter_version(mut self, meter_version: String) -> Self {
         self.meter_version = Some(meter_version);
         self
     }
 
+    /// Select instruments by its meter schema url.
     pub fn with_meter_schema_url(mut self, meter_schema_url: String) -> Self {
         self.meter_schema_url = Some(meter_schema_url);
         self

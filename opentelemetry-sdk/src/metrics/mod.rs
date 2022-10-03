@@ -1,6 +1,7 @@
 //! # OpenTelemetry Metrics SDK
 use crate::export;
 use crate::export::metrics::{LockedProcessor, Processor};
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::{
     aggregators::Aggregator,
     sdk_api::{
@@ -22,7 +23,6 @@ use std::{
     hash::{Hash, Hasher},
     sync::{Arc, Mutex},
 };
-use crate::metrics::aggregators::AggregatorBuilder;
 
 pub mod aggregators;
 pub mod controllers;
@@ -64,11 +64,14 @@ impl MeterCore for Accumulator {
     fn new_sync_instrument(
         &self,
         descriptor: Descriptor,
-    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
+    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>>
+    {
         Ok(Arc::new(SyncInstrument {
             instrument: Arc::new(BaseInstrument {
                 meter: self.clone(),
                 descriptor,
+                aggregator_builder,
             }),
         }))
     }
@@ -76,11 +79,14 @@ impl MeterCore for Accumulator {
     fn new_async_instrument(
         &self,
         descriptor: Descriptor,
-    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
+    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>>
+    {
         Ok(Arc::new(AsyncInstrument {
             instrument: Arc::new(BaseInstrument {
                 meter: self.clone(),
                 descriptor,
+                aggregator_builder,
             }),
         }))
     }
@@ -113,7 +119,6 @@ struct AccumulatorCore {
 
     /// The current epoch number. It is incremented in `collect`.
     current_epoch: AtomicNumber,
-
 }
 
 impl AccumulatorCore {
@@ -303,7 +308,7 @@ struct BaseInstrument {
     meter: Accumulator,
     descriptor: Descriptor,
 
-    aggregation_builder: Arc<dyn AggregatorBuilder>,
+    aggregator_builder: Arc<dyn AggregatorBuilder>,
 }
 
 impl BaseInstrument {
@@ -328,8 +333,8 @@ impl BaseInstrument {
             collected_count: NumberKind::U64.zero().to_atomic(),
             attributes: AttributeSet::from_attributes(kvs.iter().cloned()),
             instrument: self.clone(),
-            current: Some(self.aggregation_builder.build()),
-            checkpoint: Some(self.aggregation_builder.build()),
+            current: Some(self.aggregator_builder.build()),
+            checkpoint: Some(self.aggregator_builder.build()),
         });
         current.insert(map_key, record.clone());
 

@@ -1,3 +1,8 @@
+use crate::metrics::aggregators::{
+    AggregatorBuilder, HistogramAggregatorBuilder, LastValueAggregatorBuilder, SumAggregatorBuilder,
+};
+use std::sync::Arc;
+
 /// Kinds of OpenTelemetry metric instruments
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum InstrumentKind {
@@ -56,5 +61,18 @@ impl InstrumentKind {
     /// Whether this kind of instrument receives precomputed sums.
     pub fn precomputed_sum(&self) -> bool {
         self.adding() && self.asynchronous()
+    }
+
+    /// Default aggregation based on the instrument kind.
+    ///
+    pub fn default_aggregator_builder(&self) -> Arc<dyn AggregatorBuilder> {
+        match &self {
+            InstrumentKind::Counter
+            | InstrumentKind::CounterObserver
+            | InstrumentKind::UpDownCounter
+            | InstrumentKind::UpDownCounterObserver => Arc::new(SumAggregatorBuilder),
+            InstrumentKind::GaugeObserver => Arc::new(LastValueAggregatorBuilder),
+            InstrumentKind::Histogram => Arc::new(HistogramAggregatorBuilder::default()),
+        }
     }
 }

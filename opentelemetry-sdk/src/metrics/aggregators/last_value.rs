@@ -1,4 +1,5 @@
 use crate::export::metrics::aggregation::{Aggregation, AggregationKind, LastValue};
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::{
     aggregators::Aggregator,
     sdk_api::{Descriptor, Number},
@@ -10,16 +11,29 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 /// Create a new `LastValueAggregator`
+#[deprecated(since = "0.19.0", note = "Use `SumAggregatorBuilder` instead")]
 pub fn last_value() -> LastValueAggregator {
     LastValueAggregator {
         inner: Mutex::new(Inner::default()),
     }
 }
 
+/// Create a new [`LastValueAggregator`].
+#[derive(Debug)]
+pub struct LastValueAggregatorBuilder;
+
+impl AggregatorBuilder for LastValueAggregatorBuilder {
+    fn build(&self) -> Arc<dyn Aggregator + Send + Sync> {
+        Arc::new(LastValueAggregator {
+            inner: Mutex::new(Inner::default()),
+        })
+    }
+}
+
 /// Aggregates last value events.
 #[derive(Debug)]
 pub struct LastValueAggregator {
-    inner: Mutex<Inner>,
+    inner: Mutex<Inner>, // todo: simplify this to internal state
 }
 
 impl Aggregation for LastValueAggregator {

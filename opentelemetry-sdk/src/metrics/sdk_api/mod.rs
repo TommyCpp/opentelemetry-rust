@@ -10,6 +10,7 @@ mod wrap;
 use std::any::Any;
 use std::sync::Arc;
 
+use crate::metrics::aggregators::AggregatorBuilder;
 pub use descriptor::*;
 pub use instrument_kind::*;
 pub use number::*;
@@ -22,6 +23,7 @@ pub trait MeterCore {
     fn new_sync_instrument(
         &self,
         descriptor: Descriptor,
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
     ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>>;
 
     /// Create a new asynchronous instrument implementation.
@@ -30,6 +32,7 @@ pub trait MeterCore {
     fn new_async_instrument(
         &self,
         descriptor: Descriptor,
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
     ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>>;
 
     /// Register a batch observer

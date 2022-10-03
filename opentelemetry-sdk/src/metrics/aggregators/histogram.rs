@@ -1,43 +1,67 @@
-use std::fmt::{Debug, Formatter};
 use crate::export::metrics::aggregation::{
     Aggregation, AggregationKind, Buckets, Count, Histogram, Sum,
 };
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::{
     aggregators::Aggregator,
     sdk_api::{AtomicNumber, Descriptor, Number, NumberKind},
 };
 use opentelemetry_api::metrics::{MetricsError, Result};
 use opentelemetry_api::Context;
+use std::fmt::Debug;
 use std::mem;
 use std::sync::{Arc, RwLock};
-use crate::metrics::aggregators::AggregatorBuilder;
 
 /// Create a new [`HistogramAggregator`] with the custom boundaries.
 // todo: give an example of how custom boundaries are used
-pub struct HistogramBuilder<'a> {
-    boundaries: &'a [f64]
+#[derive(Debug)]
+pub struct HistogramAggregatorBuilder {
+    sorted_boundaries: Vec<f64>,
+    // todo: add record min max option
 }
 
-impl<'a> Debug for HistogramBuilder<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HistogramBuilder")
-            .field("boundaries", &self.boundaries)
-            .finish()
+impl Default for HistogramAggregatorBuilder {
+    fn default() -> Self {
+        HistogramAggregatorBuilder {
+            sorted_boundaries: vec![
+                0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000,
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
+        }
     }
 }
 
-impl<'a> AggregatorBuilder for HistogramBuilder<'a> {
+impl HistogramAggregatorBuilder {
+    pub fn new<T>(boundaries: T) -> Self
+    where
+        T: Into<Vec<f64>>,
+    {
+        let mut sorted_boundaries = boundaries.into();
+        sorted_boundaries.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        Self { sorted_boundaries }
+    }
+}
 
-    fn build(&self) -> Arc<dyn Aggregator + Send + Sync>{
-        Arc::new(histogram(self.boundaries))
+impl AggregatorBuilder for HistogramAggregatorBuilder {
+    fn build(&self) -> Arc<dyn Aggregator + Send + Sync> {
+        let state = State::empty(self.sorted_boundaries.len());
+        Arc::new(HistogramAggregator {
+            inner: RwLock::new(Inner {
+                boundaries: self.sorted_boundaries.clone(),
+                state,
+            }),
+        })
     }
 }
 
 /// Create a new histogram for the given descriptor with the given boundaries
+#[deprecated(since = "0.19.0", note = "Use `HistogramAggregatorBuilder` instead")]
 pub fn histogram(boundaries: &[f64]) -> HistogramAggregator {
     let mut sorted_boundaries = boundaries.to_owned();
     sorted_boundaries.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let state = State::empty(&sorted_boundaries);
+    let state = State::empty(sorted_boundaries.len());
 
     HistogramAggregator {
         inner: RwLock::new(Inner {
@@ -68,9 +92,9 @@ struct State {
 }
 
 impl State {
-    fn empty(boundaries: &[f64]) -> Self {
+    fn empty(boundaries_length: usize) -> Self {
         State {
-            bucket_counts: vec![0.0; boundaries.len() + 1],
+            bucket_counts: vec![0.0; boundaries_length + 1],
             count: NumberKind::U64.zero().to_atomic(),
             sum: NumberKind::U64.zero().to_atomic(),
         }
@@ -144,7 +168,7 @@ impl Aggregator for HistogramAggregator {
                 .map_err(From::from)
                 .and_then(|mut inner| {
                     other.inner.write().map_err(From::from).map(|mut other| {
-                        let empty = State::empty(&inner.boundaries);
+                        let empty = State::empty(inner.boundaries.len());
                         other.state = mem::replace(&mut inner.state, empty)
                     })
                 })

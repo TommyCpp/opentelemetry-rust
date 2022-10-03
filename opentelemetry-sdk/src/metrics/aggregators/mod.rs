@@ -15,9 +15,9 @@ mod histogram;
 mod last_value;
 mod sum;
 
-pub use histogram::{histogram, HistogramAggregator};
-pub use last_value::{last_value, LastValueAggregator};
-pub use sum::{sum, SumAggregator};
+pub use histogram::{histogram, HistogramAggregator, HistogramAggregatorBuilder};
+pub use last_value::{last_value, LastValueAggregator, LastValueAggregatorBuilder};
+pub use sum::{sum, SumAggregator, SumAggregatorBuilder};
 
 /// RangeTest is a common routine for testing for valid input values. This
 /// rejects NaN values. This rejects negative values when the metric instrument
@@ -42,7 +42,8 @@ pub fn range_test(number: &Number, descriptor: &Descriptor) -> Result<()> {
 }
 
 /// AggregatorBuilder is a factory for aggregators.
-pub trait AggregatorBuilder: Send + Sync + fmt::Debug {
+pub trait AggregatorBuilder: Send + Sync + fmt::Debug + 'static {
+    /// Build a new aggregator using configuration saved in the builder.
     fn build(&self) -> Arc<dyn Aggregator + Send + Sync>;
 }
 

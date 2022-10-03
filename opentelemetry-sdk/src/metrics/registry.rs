@@ -1,4 +1,5 @@
 //! Metrics Registry API
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::sdk_api::{Descriptor, SyncInstrumentCore};
 use core::fmt;
 use opentelemetry_api::{
@@ -63,13 +64,17 @@ impl MeterCore for UniqueInstrumentMeterCore {
     fn new_sync_instrument(
         &self,
         descriptor: Descriptor,
-    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
+    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>>
+    {
         self.state.lock().map_err(Into::into).and_then(|mut state| {
             let instrument = check_uniqueness(&state, &descriptor)?;
             match instrument {
                 Some(instrument) => Ok(instrument),
                 None => {
-                    let instrument = self.inner.new_sync_instrument(descriptor.clone())?;
+                    let instrument = self
+                        .inner
+                        .new_sync_instrument(descriptor.clone(), aggregator_builder)?;
                     state.insert(descriptor.name().into(), instrument.clone().as_dyn_core());
 
                     Ok(instrument)
@@ -81,13 +86,17 @@ impl MeterCore for UniqueInstrumentMeterCore {
     fn new_async_instrument(
         &self,
         descriptor: Descriptor,
-    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
+    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>>
+    {
         self.state.lock().map_err(Into::into).and_then(|mut state| {
             let instrument = check_uniqueness(&state, &descriptor)?;
             match instrument {
                 Some(instrument) => Ok(instrument),
                 None => {
-                    let instrument = self.inner.new_async_instrument(descriptor)?;
+                    let instrument = self
+                        .inner
+                        .new_async_instrument(descriptor, aggregator_builder)?;
                     state.insert(
                         instrument.descriptor().name().into(),
                         instrument.clone().as_dyn_core(),

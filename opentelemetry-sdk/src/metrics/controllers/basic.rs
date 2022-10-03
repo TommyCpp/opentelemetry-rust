@@ -30,6 +30,7 @@ use crate::{
     runtime::Runtime,
     Resource,
 };
+use crate::metrics::aggregators::AggregatorBuilder;
 
 /// DefaultPeriod is used for:
 ///
@@ -304,15 +305,15 @@ impl MeterProvider for BasicController {
         schema_url: Option<&'static str>,
     ) -> Meter {
         // select applicable view from the meter provider's view pool
-        let applicable_views = self.0.views.iter().filter(|&&view| {
+        let _applicable_views: Vec<View> = self.0.views.iter().filter(|&view| {
             let mut is_match = true;
-            if let Some(view_meter_name) = view.selector.meter_name {
+            if let Some(view_meter_name) = &view.selector.meter_name {
                 is_match = is_match && view_meter_name == name;
             }
-            if let (Some(view_meter_version), Some(meter_version)) = (view.selector.meter_version, version) {
+            if let (Some(view_meter_version), Some(meter_version)) = (&view.selector.meter_version, version) {
                 is_match = is_match && view_meter_version == meter_version;
             }
-            if let (Some(view_meter_schema_url), Some(meter_schema_url)) = (view.selector.meter_schema_url, schema_url) {
+            if let (Some(view_meter_schema_url), Some(meter_schema_url)) = (&view.selector.meter_schema_url, schema_url) {
                 is_match = is_match && view_meter_schema_url == meter_schema_url;
             }
             is_match
@@ -351,15 +352,17 @@ impl MeterCore for AccumulatorCheckpointer {
     fn new_sync_instrument(
         &self,
         descriptor: Descriptor,
+        aggregator_builder: Arc<dyn AggregatorBuilder>
     ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
-        self.accumulator.new_sync_instrument(descriptor)
+        self.accumulator.new_sync_instrument(descriptor, aggregator_builder)
     }
 
     fn new_async_instrument(
         &self,
         descriptor: Descriptor,
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
     ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
-        self.accumulator.new_async_instrument(descriptor)
+        self.accumulator.new_async_instrument(descriptor, aggregator_builder)
     }
 
     fn register_callback(&self, f: Box<dyn Fn(&Context) + Send + Sync>) -> Result<()> {

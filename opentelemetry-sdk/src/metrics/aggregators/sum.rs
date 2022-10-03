@@ -1,4 +1,5 @@
 use crate::export::metrics::aggregation::{Aggregation, AggregationKind, Sum};
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::{
     aggregators::Aggregator,
     sdk_api::{AtomicNumber, Descriptor, Number},
@@ -6,11 +7,23 @@ use crate::metrics::{
 use opentelemetry_api::metrics::{MetricsError, Result};
 use opentelemetry_api::Context;
 use std::any::Any;
+use std::fmt::Debug;
 use std::sync::Arc;
 
 /// Create a new sum aggregator.
+#[deprecated(since = "0.19.0", note = "Use `SumAggregatorBuilder` instead")]
 pub fn sum() -> impl Aggregator {
     SumAggregator::default()
+}
+
+/// Create a new [`SumAggregator`].
+#[derive(Debug)]
+pub struct SumAggregatorBuilder;
+
+impl AggregatorBuilder for SumAggregatorBuilder {
+    fn build(&self) -> Arc<dyn Aggregator + Send + Sync> {
+        Arc::new(SumAggregator::default())
+    }
 }
 
 /// An aggregator for counter events.

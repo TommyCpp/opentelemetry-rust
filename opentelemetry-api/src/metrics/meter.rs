@@ -33,7 +33,6 @@ pub trait MeterProvider {
 pub struct Meter {
     pub(crate) instrumentation_library: InstrumentationLibrary,
     pub(crate) instrument_provider: Arc<dyn InstrumentProvider + Send + Sync>,
-    pub(crate) meter_provider: Weak<dyn MeterProvider>,
 }
 
 impl Meter {
@@ -41,12 +40,10 @@ impl Meter {
     pub fn new(
         instrumentation_library: InstrumentationLibrary,
         instrument_provider: Arc<dyn InstrumentProvider + Send + Sync>,
-        meter_provider: Weak<dyn MeterProvider>,
     ) -> Self {
         Meter {
             instrumentation_library,
             instrument_provider,
-            meter_provider,
         }
     }
 
