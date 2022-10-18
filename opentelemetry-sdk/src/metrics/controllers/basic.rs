@@ -473,10 +473,9 @@ impl BasicControllerBuilder {
     /// # use opentelemetry_sdk::metrics::view::{InstrumentSelector, View};
     /// let _ = BasicControllerBuilder::default()
     ///         .add_view(
-    ///             View::new()
+    ///             View::select(InstrumentSelector::instrument_name("instrument_1"))
     ///                 .with_name("view_1")
     ///                 .with_description("this is a description for the a metric stream")
-    ///                 .with_selector(InstrumentSelector::new().with_instrument_name("instrument_1"))
     ///         )
     ///         .build();
     /// ```

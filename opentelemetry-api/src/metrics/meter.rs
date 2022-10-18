@@ -1,5 +1,5 @@
 use core::fmt;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use crate::metrics::{
     Counter, Histogram, InstrumentBuilder, InstrumentProvider, MetricsError, ObservableCounter,

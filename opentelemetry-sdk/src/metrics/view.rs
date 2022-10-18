@@ -14,6 +14,14 @@
 //! developer might only care about HTTP status code (e.g. reporting the total count of HTTP requests
 //! for each HTTP status code). There could also be extreme scenarios in which the application developer
 //! does not need any attributes (e.g. just get the total count of all incoming requests).
+//!
+//!
+//! ## Named view
+//! Since `View` name is used as metrics stream name, it means if a named view select multiple instruments,
+//! the output will contains multiple metrics stream with same name. Thus, the instrument selector of a named view
+//! should match only one instrument.
+//!
+//! For view without a name, SDK will
 
 use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::sdk_api::InstrumentKind;
@@ -24,26 +32,46 @@ use std::sync::Arc;
 /// Select instruments by name, kind, unit or meter name, version and schema_url.
 ///
 /// Note that only the instrument that meets **all** condition will be selected.
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
+///
+/// ## Wildcard
+/// Wildcard like `*` and `?` are not supported at the moment but maybe added in the future.
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct InstrumentSelector {
     pub(crate) instrument_kind: Option<InstrumentKind>,
-    pub(crate) instrument_name: Option<String>,
+    pub(crate) instrument_name: String,
     pub(crate) instrument_unit: Option<Unit>,
     pub(crate) meter_name: Option<String>,
     pub(crate) meter_version: Option<String>,
     pub(crate) meter_schema_url: Option<String>,
 }
 
+impl Default for InstrumentSelector {
+    fn default() -> Self {
+        Self {
+            instrument_kind: None,
+            instrument_name: "*".to_string(),
+            instrument_unit: None,
+            meter_name: None,
+            meter_version: None,
+            meter_schema_url: None,
+        }
+    }
+}
+
 impl InstrumentSelector {
+    /// Select instruments by its name.
+    ///
+    /// Wildcard are not supported in general. But `*` is supported as a special case to match all instruments regardless of their names.
+    pub fn instrument_name<T: Into<String>>(instrument_name: T) -> Self {
+        Self {
+            instrument_name: instrument_name.into(),
+            ..Self::default()
+        }
+    }
+
     /// Select instruments by its kind. See [`InstrumentKind`] for more information.
     pub fn with_instrument_kind(mut self, instrument_kind: InstrumentKind) -> Self {
         self.instrument_kind = Some(instrument_kind);
-        self
-    }
-
-    /// Select instruments by its name.
-    pub fn with_instrument_name<T: Into<String>>(mut self, instrument_name: T) -> Self {
-        self.instrument_name = Some(instrument_name.into());
         self
     }
 
@@ -74,7 +102,7 @@ impl InstrumentSelector {
     // todo: add support to set InstrumentScope/InstrumentLibrary
 }
 
-/// build a new `View` based on the criteria provided
+/// Build a new `View`. See module level doc for more details.
 ///
 /// User MUST provide at least one criteria.
 ///
@@ -83,27 +111,19 @@ impl InstrumentSelector {
 #[derive(Debug, Clone)]
 pub struct View {
     pub(crate) view_name: Option<String>,
+    pub(crate) selector: InstrumentSelector,
+
+    // configuration for metrics stream below
     pub(crate) metrics_stream_desc: Option<String>,
     pub(crate) exported_attribute_keys: Vec<Key>,
     pub(crate) aggregation_builder: Option<Arc<dyn AggregatorBuilder>>,
-
-    pub(crate) selector: InstrumentSelector,
 }
 
 impl View {
-    pub fn new() -> Self {
-        View {
-            view_name: None,
-            metrics_stream_desc: None,
-            exported_attribute_keys: vec![],
-            aggregation_builder: None,
-            selector: InstrumentSelector::default(),
-        }
-    }
-
     /// The name of the View, optional. This will be used as the name of metric stream.
     ///
-    /// If not provided, the instrument name will be used by default.
+    /// If not provided, the instrument name will be used by default as the metric stream name.
+    // todo: named view should only matches one instrument
     pub fn with_name(mut self, name: impl Into<String>) -> Self {
         self.view_name = Some(name.into());
         self
@@ -111,10 +131,14 @@ impl View {
 
     /// The selector of instrument that this view is applied to, required.
     ///
-    ///
-    pub fn with_selector(mut self, selector: InstrumentSelector) -> Self {
-        self.selector = selector;
-        self
+    pub fn select(selector: InstrumentSelector) -> Self {
+        return View {
+            view_name: None,
+            metrics_stream_desc: None,
+            exported_attribute_keys: vec![],
+            aggregation_builder: None,
+            selector,
+        }
     }
 
     /// The description of the metric stream, optional.
