@@ -605,7 +605,8 @@ mod tests {
     };
     use opentelemetry::sdk::export::metrics::record;
     use opentelemetry::sdk::metrics::aggregators::{
-        histogram, last_value, Aggregator, SumAggregator,
+        Aggregator, AggregatorBuilder, HistogramAggregatorBuilder, LastValueAggregatorBuilder,
+        SumAggregator,
     };
     use opentelemetry::sdk::metrics::sdk_api::{Descriptor, InstrumentKind, Number, NumberKind};
     use opentelemetry::{attributes::AttributeSet, metrics::MetricsError};
@@ -848,16 +849,15 @@ mod tests {
                 None,
                 None,
             );
-            let aggregator = last_value();
+            let aggregator = LastValueAggregatorBuilder::default().build();
             let val1 = Number::from(12_i64);
             let val2 = Number::from(14_i64);
             aggregator.update(&cx, &val1, &descriptor)?;
             aggregator.update(&cx, &val2, &descriptor)?;
-            let wrapped_aggregator: Arc<dyn Aggregator + Send + Sync> = Arc::new(aggregator);
             let record = record(
                 &descriptor,
                 &attribute_set,
-                Some(&wrapped_aggregator),
+                Some(&aggregator),
                 start_time,
                 end_time,
             );
@@ -918,17 +918,15 @@ mod tests {
                 None,
                 None,
             );
-            let bound = [0.1, 0.2, 0.3];
-            let aggregator = histogram(&bound);
+            let aggregator = HistogramAggregatorBuilder::new([0.1, 0.2, 0.3]).build();
             let vals = vec![1i64.into(), 2i64.into(), 3i64.into()];
             for val in vals.iter() {
                 aggregator.update(&cx, val, &descriptor)?;
             }
-            let wrapped_aggregator: Arc<dyn Aggregator + Send + Sync> = Arc::new(aggregator);
             let record = record(
                 &descriptor,
                 &attribute_set,
-                Some(&wrapped_aggregator),
+                Some(&aggregator),
                 start_time,
                 end_time,
             );

@@ -3,7 +3,7 @@ use opentelemetry::runtime;
 use opentelemetry::sdk::export::metrics::aggregation::{
     AggregationKind, Temporality, TemporalitySelector,
 };
-use opentelemetry::sdk::metrics::aggregators::Aggregator;
+use opentelemetry::sdk::metrics::aggregators::{Aggregator, AggregatorBuilder};
 use opentelemetry::sdk::metrics::controllers::BasicController;
 use opentelemetry::sdk::metrics::sdk_api::Descriptor;
 use opentelemetry::sdk::{export::metrics::AggregatorSelector, metrics::aggregators};
@@ -87,9 +87,11 @@ impl AggregatorSelector for CustomAggregator {
         descriptor: &Descriptor,
     ) -> Option<Arc<(dyn Aggregator + Sync + std::marker::Send + 'static)>> {
         match descriptor.name() {
-            "ex.com.one" => Some(Arc::new(aggregators::last_value())),
-            "ex.com.two" => Some(Arc::new(aggregators::histogram(&[0.0, 0.5, 1.0, 10.0]))),
-            _ => Some(Arc::new(aggregators::sum())),
+            "ex.com.one" => Some(aggregators::LastValueAggregatorBuilder::default().build()),
+            "ex.com.two" => {
+                Some(aggregators::HistogramAggregatorBuilder::new([0.0, 0.5, 1.0, 10.0]).build())
+            }
+            _ => Some(aggregators::SumAggregatorBuilder::default().build()),
         }
     }
 }

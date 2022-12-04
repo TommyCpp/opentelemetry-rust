@@ -3,6 +3,7 @@ use criterion::{
     Criterion,
 };
 use opentelemetry_api::{metrics::Meter, Context, InstrumentationLibrary, Key, KeyValue};
+use opentelemetry_sdk::metrics::aggregators::AggregatorBuilder;
 use opentelemetry_sdk::{
     export::metrics::{AggregatorSelector, Processor},
     metrics::{
@@ -76,9 +77,15 @@ impl AggregatorSelector for BenchAggregatorSelector {
     fn aggregator_for(&self, descriptor: &Descriptor) -> Option<Arc<dyn Aggregator + Send + Sync>> {
         match descriptor.name() {
             name if name.ends_with(".disabled") => None,
-            name if name.ends_with(".sum") => Some(Arc::new(aggregators::sum())),
-            name if name.ends_with(".lastvalue") => Some(Arc::new(aggregators::last_value())),
-            name if name.ends_with(".histogram") => Some(Arc::new(aggregators::histogram(&[]))),
+            name if name.ends_with(".sum") => {
+                Some(aggregators::SumAggregatorBuilder::default().build())
+            }
+            name if name.ends_with(".lastvalue") => {
+                Some(aggregators::LastValueAggregatorBuilder::default().build())
+            }
+            name if name.ends_with(".histogram") => {
+                Some(aggregators::HistogramAggregatorBuilder::default().build())
+            }
             _ => panic!(
                 "Invalid instrument name for test AggregatorSelector: {}",
                 descriptor.name()
