@@ -1,6 +1,6 @@
 //! Simple Metric Selectors
 use crate::export::metrics::AggregatorSelector;
-use crate::metrics::aggregators::{self, Aggregator};
+use crate::metrics::aggregators::{Aggregator, AggregatorBuilder, HistogramAggregatorBuilder, LastValueAggregatorBuilder, SumAggregatorBuilder};
 use crate::metrics::sdk_api::{Descriptor, InstrumentKind};
 use std::sync::Arc;
 
@@ -15,8 +15,8 @@ struct InexpensiveSelector;
 impl AggregatorSelector for InexpensiveSelector {
     fn aggregator_for(&self, descriptor: &Descriptor) -> Option<Arc<dyn Aggregator + Send + Sync>> {
         match descriptor.instrument_kind() {
-            InstrumentKind::GaugeObserver => Some(Arc::new(aggregators::last_value())),
-            _ => Some(Arc::new(aggregators::sum())),
+            InstrumentKind::GaugeObserver => Some(LastValueAggregatorBuilder::default().build()),
+            _ => Some(SumAggregatorBuilder::default().build()),
         }
     }
 }
@@ -35,9 +35,9 @@ struct HistogramSelector(Vec<f64>);
 impl AggregatorSelector for HistogramSelector {
     fn aggregator_for(&self, descriptor: &Descriptor) -> Option<Arc<dyn Aggregator + Send + Sync>> {
         match descriptor.instrument_kind() {
-            InstrumentKind::GaugeObserver => Some(Arc::new(aggregators::last_value())),
-            InstrumentKind::Histogram => Some(Arc::new(aggregators::histogram(&self.0))),
-            _ => Some(Arc::new(aggregators::sum())),
+            InstrumentKind::GaugeObserver => Some(LastValueAggregatorBuilder::default().build()),
+            InstrumentKind::Histogram => Some(HistogramAggregatorBuilder::new(self.0.clone()).build()),
+            _ => Some(SumAggregatorBuilder::default().build()),
         }
     }
 }

@@ -15,9 +15,12 @@ mod histogram;
 mod last_value;
 mod sum;
 
-pub use histogram::{histogram, HistogramAggregator, HistogramAggregatorBuilder};
-pub use last_value::{last_value, LastValueAggregator, LastValueAggregatorBuilder};
-pub use sum::{sum, SumAggregator, SumAggregatorBuilder};
+pub use histogram::{HistogramAggregator, HistogramAggregatorBuilder};
+pub use last_value::{LastValueAggregator, LastValueAggregatorBuilder};
+pub use sum::{SumAggregator, SumAggregatorBuilder};
+
+#[allow(deprecated)] // remove this when we remove the deprecated functions
+pub use {histogram::histogram, last_value::last_value, sum::sum};
 
 /// RangeTest is a common routine for testing for valid input values. This
 /// rejects NaN values. This rejects negative values when the metric instrument

@@ -305,7 +305,7 @@ impl MeterProvider for BasicController {
         schema_url: Option<&'static str>,
     ) -> Meter {
         // select applicable view from the meter provider's view pool
-        let _applicable_views: Vec<View> = self.0.views.iter().filter(|&view| {
+        let applicable_views: Vec<View> = self.0.views.iter().filter(|&view| {
             let mut is_match = true;
             if let Some(view_meter_name) = &view.selector.meter_name {
                 is_match = is_match && view_meter_name == name;
@@ -334,7 +334,7 @@ impl MeterProvider for BasicController {
                         },
                     ))
                 });
-                wrap_meter_core(meter_core.clone(), library)
+                wrap_meter_core(meter_core.clone(), library, applicable_views)
             })
             .unwrap_or_else(|_| {
                 noop::NoopMeterProvider::new().versioned_meter(name, version, schema_url)
@@ -473,7 +473,7 @@ impl BasicControllerBuilder {
     /// # use opentelemetry_sdk::metrics::view::{InstrumentSelector, View};
     /// let _ = BasicControllerBuilder::default()
     ///         .add_view(
-    ///             View::select(InstrumentSelector::instrument_name("instrument_1"))
+    ///             View::new(InstrumentSelector::instrument_name("instrument_1"))
     ///                 .with_name("view_1")
     ///                 .with_description("this is a description for the a metric stream")
     ///         )

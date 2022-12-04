@@ -19,7 +19,7 @@ pub fn last_value() -> LastValueAggregator {
 }
 
 /// Create a new [`LastValueAggregator`].
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LastValueAggregatorBuilder;
 
 impl AggregatorBuilder for LastValueAggregatorBuilder {

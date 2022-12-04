@@ -120,18 +120,9 @@ pub struct View {
 }
 
 impl View {
-    /// The name of the View, optional. This will be used as the name of metric stream.
-    ///
-    /// If not provided, the instrument name will be used by default as the metric stream name.
-    // todo: named view should only matches one instrument
-    pub fn with_name(mut self, name: impl Into<String>) -> Self {
-        self.view_name = Some(name.into());
-        self
-    }
-
     /// The selector of instrument that this view is applied to, required.
     ///
-    pub fn select(selector: InstrumentSelector) -> Self {
+    pub fn new(selector: InstrumentSelector) -> Self {
         return View {
             view_name: None,
             metrics_stream_desc: None,
@@ -139,6 +130,15 @@ impl View {
             aggregation_builder: None,
             selector,
         }
+    }
+
+    /// The name of the View, optional. This will be used as the name of metric stream.
+    ///
+    /// If not provided, the instrument name will be used by default as the metric stream name.
+    // todo: named view should only matches one instrument
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.view_name = Some(name.into());
+        self
     }
 
     /// The description of the metric stream, optional.
@@ -166,5 +166,10 @@ impl View {
     {
         self.aggregation_builder = Some(Arc::new(aggregation_builder));
         self
+    }
+
+    /// Return a copy of aggregation builder.
+    pub fn aggregation_builder(&self) -> Option<Arc<dyn AggregatorBuilder>> {
+        self.aggregation_builder.clone()
     }
 }

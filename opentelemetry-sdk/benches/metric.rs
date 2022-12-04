@@ -102,7 +102,7 @@ fn build_meter() -> Meter {
     let processor = Arc::new(BenchProcessor::default());
     let core = accumulator(processor);
     let library = InstrumentationLibrary::new("benches", None, None);
-    wrap_meter_core(Arc::new(core), library)
+    wrap_meter_core(Arc::new(core), library, vec![])
 }
 
 criterion_group!(benches, counters);

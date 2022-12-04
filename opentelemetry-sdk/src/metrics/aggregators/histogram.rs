@@ -34,6 +34,9 @@ impl Default for HistogramAggregatorBuilder {
 }
 
 impl HistogramAggregatorBuilder {
+    /// Create a new [`HistogramAggregatorBuilder`] with the custom boundaries.
+    ///
+    /// By default, the boundaries of the histogram are: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
     pub fn new<T>(boundaries: T) -> Self
     where
         T: Into<Vec<f64>>,

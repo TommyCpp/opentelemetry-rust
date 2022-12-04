@@ -1,30 +1,390 @@
-use crate::metrics::sdk_api::MeterCore;
-use crate::metrics::sdk_api::{
-    AsyncInstrumentCore, Descriptor, InstrumentKind, Number, NumberKind, SyncInstrumentCore,
-};
-use opentelemetry_api::metrics::{
-    AsyncCounter, AsyncUpDownCounter, ObservableUpDownCounter, SyncCounter,
-    SyncHistogram, SyncUpDownCounter, UpDownCounter,
-};
-use opentelemetry_api::KeyValue;
-use opentelemetry_api::{
-    metrics::{
-        AsyncGauge, Counter, Histogram, InstrumentProvider, Meter, ObservableCounter,
-        ObservableGauge, Result, Unit,
-    },
-    Context, InstrumentationLibrary,
-};
 use std::sync::Arc;
 
+use opentelemetry_api::metrics::{
+    AsyncCounter, AsyncGauge, AsyncUpDownCounter, Counter, Histogram, InstrumentProvider, Meter,
+    ObservableCounter, ObservableGauge, ObservableUpDownCounter, Result, SyncCounter,
+    SyncHistogram, SyncUpDownCounter, Unit, UpDownCounter,
+};
+use opentelemetry_api::{Context, InstrumentationLibrary, KeyValue};
+
+use crate::metrics::aggregators::AggregatorBuilder;
+use crate::metrics::sdk_api::{
+    AsyncInstrumentCore, Descriptor, InstrumentKind, MeterCore, Number, NumberKind,
+    SyncInstrumentCore,
+};
+use crate::metrics::view::View;
+
 /// wraps impl to be a full implementation of a Meter.
+///
+/// Note that the `views` should only contains view that matches the meter's name, version and schema url(if applicable).
 pub fn wrap_meter_core(
     core: Arc<dyn MeterCore + Send + Sync>,
     library: InstrumentationLibrary,
+    filtered_views: Vec<View>,
 ) -> Meter {
-    Meter::new(library, Arc::new(MeterImpl(core)))
+    Meter::new(library, Arc::new(MeterImpl::new(core, filtered_views)))
 }
 
-struct MeterImpl(Arc<dyn MeterCore + Send + Sync>);
+struct MeterImpl {
+    core: Arc<dyn MeterCore + Send + Sync>,
+    views: Vec<View>,
+}
+
+impl MeterImpl {
+    fn new(core: Arc<dyn MeterCore + Send + Sync>, views: Vec<View>) -> Self {
+        MeterImpl { core, views }
+    }
+
+    fn select_views(
+        &self,
+        instrument_name: &String,
+        instrument_unit: &Option<Unit>,
+        instrument_kind: InstrumentKind,
+    ) -> Arc<dyn AggregatorBuilder> {
+        let candidates = self
+            .views
+            .iter()
+            .filter(|view| {
+                // we don't need to check meter name, version and schema url here because the views are already filtered
+                let selector = &view.selector;
+                if selector.instrument_name != "*" && selector.instrument_name != *instrument_name {
+                    return false;
+                }
+                if let (Some(unit), Some(target_unit)) =
+                    (&selector.instrument_unit, instrument_unit)
+                {
+                    if *unit != *target_unit {
+                        return false;
+                    }
+                }
+                if let Some(kind) = &selector.instrument_kind {
+                    if *kind != instrument_kind {
+                        return false;
+                    }
+                }
+                true
+            })
+            .collect::<Vec<&View>>();
+        if candidates.len() == 0 {
+            return instrument_kind.default_aggregator_builder();
+        }
+        return candidates
+            .first()
+            .map(|view| view.aggregation_builder())
+            .flatten()
+            .unwrap_or(instrument_kind.default_aggregator_builder());
+    }
+}
+
+impl InstrumentProvider for MeterImpl {
+    fn u64_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<Counter<u64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::Counter);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Counter,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn f64_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<Counter<f64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::Counter);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Counter,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn u64_observable_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableCounter<u64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::CounterObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::CounterObserver,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
+            instrument,
+        ))))
+    }
+
+    fn f64_observable_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableCounter<f64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::CounterObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::CounterObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
+            instrument,
+        ))))
+    }
+
+    fn i64_up_down_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<UpDownCounter<i64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::UpDownCounter);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounter,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn f64_up_down_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<UpDownCounter<f64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::UpDownCounter);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounter,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn i64_observable_up_down_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableUpDownCounter<i64>> {
+        let aggregator_builder =
+            self.select_views(&name, &unit, InstrumentKind::UpDownCounterObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounterObserver,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
+            instrument,
+        ))))
+    }
+
+    fn f64_observable_up_down_counter(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableUpDownCounter<f64>> {
+        let aggregator_builder =
+            self.select_views(&name, &unit, InstrumentKind::UpDownCounterObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::UpDownCounterObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
+            instrument,
+        ))))
+    }
+
+    fn u64_observable_gauge(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableGauge<u64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::GaugeObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
+    }
+
+    fn i64_observable_gauge(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableGauge<i64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::GaugeObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
+    }
+
+    fn f64_observable_gauge(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<ObservableGauge<f64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::GaugeObserver);
+        let instrument = self.core.new_async_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::GaugeObserver,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
+    }
+
+    fn f64_histogram(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<Histogram<f64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::Histogram);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::F64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn u64_histogram(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<Histogram<u64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::Histogram);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::U64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn i64_histogram(
+        &self,
+        name: String,
+        description: Option<String>,
+        unit: Option<Unit>,
+    ) -> Result<Histogram<i64>> {
+        let aggregator_builder = self.select_views(&name, &unit, InstrumentKind::Histogram);
+        let instrument = self.core.new_sync_instrument(
+            Descriptor::new(
+                name,
+                InstrumentKind::Histogram,
+                NumberKind::I64,
+                description,
+                unit,
+            ),
+            aggregator_builder,
+        )?;
+
+        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
+    }
+
+    fn register_callback(&self, callback: Box<dyn Fn(&Context) + Send + Sync>) -> Result<()> {
+        self.core.register_callback(callback)
+    }
+}
 
 struct SyncInstrument(Arc<dyn SyncInstrumentCore + Send + Sync>);
 
@@ -63,299 +423,5 @@ impl<T: Into<Number>> AsyncUpDownCounter<T> for AsyncInstrument {
 impl<T: Into<Number>> AsyncGauge<T> for AsyncInstrument {
     fn observe(&self, cx: &Context, value: T, attributes: &[KeyValue]) {
         self.0.observe_one(cx, value.into(), attributes)
-    }
-}
-
-impl InstrumentProvider for MeterImpl {
-    fn u64_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<Counter<u64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::Counter,
-                NumberKind::U64,
-                description,
-                unit,
-            ),
-            InstrumentKind::Counter.default_aggregator_builder(),
-        )?;
-
-        Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn f64_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<Counter<f64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::Counter,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::Counter.default_aggregator_builder(),
-        )?;
-
-        Ok(Counter::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn u64_observable_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableCounter<u64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::CounterObserver,
-                NumberKind::U64,
-                description,
-                unit,
-            ),
-            InstrumentKind::CounterObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
-            instrument,
-        ))))
-    }
-
-    fn f64_observable_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableCounter<f64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::CounterObserver,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::CounterObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableCounter::new(Arc::new(AsyncInstrument(
-            instrument,
-        ))))
-    }
-
-    fn i64_up_down_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<UpDownCounter<i64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::UpDownCounter,
-                NumberKind::I64,
-                description,
-                unit,
-            ),
-            InstrumentKind::UpDownCounter.default_aggregator_builder(),
-        )?;
-
-        Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn f64_up_down_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<UpDownCounter<f64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::UpDownCounter,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::UpDownCounter.default_aggregator_builder(),
-        )?;
-
-        Ok(UpDownCounter::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn i64_observable_up_down_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableUpDownCounter<i64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::UpDownCounterObserver,
-                NumberKind::I64,
-                description,
-                unit,
-            ),
-            InstrumentKind::UpDownCounterObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
-            instrument,
-        ))))
-    }
-
-    fn f64_observable_up_down_counter(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableUpDownCounter<f64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::UpDownCounterObserver,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::UpDownCounterObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableUpDownCounter::new(Arc::new(AsyncInstrument(
-            instrument,
-        ))))
-    }
-
-    fn u64_observable_gauge(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableGauge<u64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::GaugeObserver,
-                NumberKind::U64,
-                description,
-                unit,
-            ),
-            InstrumentKind::GaugeObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
-    }
-
-    fn i64_observable_gauge(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableGauge<i64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::GaugeObserver,
-                NumberKind::I64,
-                description,
-                unit,
-            ),
-            InstrumentKind::GaugeObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
-    }
-
-    fn f64_observable_gauge(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<ObservableGauge<f64>> {
-        let instrument = self.0.new_async_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::GaugeObserver,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::GaugeObserver.default_aggregator_builder(),
-        )?;
-
-        Ok(ObservableGauge::new(Arc::new(AsyncInstrument(instrument))))
-    }
-
-    fn f64_histogram(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<Histogram<f64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::Histogram,
-                NumberKind::F64,
-                description,
-                unit,
-            ),
-            InstrumentKind::Histogram.default_aggregator_builder(),
-        )?;
-
-        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn u64_histogram(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<Histogram<u64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::Histogram,
-                NumberKind::U64,
-                description,
-                unit,
-            ),
-            InstrumentKind::Histogram.default_aggregator_builder(),
-        )?;
-
-        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn i64_histogram(
-        &self,
-        name: String,
-        description: Option<String>,
-        unit: Option<Unit>,
-    ) -> Result<Histogram<i64>> {
-        let instrument = self.0.new_sync_instrument(
-            Descriptor::new(
-                name,
-                InstrumentKind::Histogram,
-                NumberKind::I64,
-                description,
-                unit,
-            ),
-            InstrumentKind::Histogram.default_aggregator_builder(),
-        )?;
-
-        Ok(Histogram::new(Arc::new(SyncInstrument(instrument))))
-    }
-
-    fn register_callback(&self, callback: Box<dyn Fn(&Context) + Send + Sync>) -> Result<()> {
-        self.0.register_callback(callback)
     }
 }

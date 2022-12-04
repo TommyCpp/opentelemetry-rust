@@ -17,7 +17,7 @@ pub fn sum() -> impl Aggregator {
 }
 
 /// Create a new [`SumAggregator`].
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SumAggregatorBuilder;
 
 impl AggregatorBuilder for SumAggregatorBuilder {
