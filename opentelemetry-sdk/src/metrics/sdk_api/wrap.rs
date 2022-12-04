@@ -65,14 +65,13 @@ impl MeterImpl {
                 true
             })
             .collect::<Vec<&View>>();
-        if candidates.len() == 0 {
+        if candidates.is_empty() {
             return instrument_kind.default_aggregator_builder();
         }
         return candidates
             .first()
-            .map(|view| view.aggregation_builder())
-            .flatten()
-            .unwrap_or(instrument_kind.default_aggregator_builder());
+            .and_then(|view| view.aggregation_builder())
+            .unwrap_or_else(|| instrument_kind.default_aggregator_builder());
     }
 }
 

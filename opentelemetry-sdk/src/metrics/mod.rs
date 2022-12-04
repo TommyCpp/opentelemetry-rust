@@ -65,8 +65,7 @@ impl MeterCore for Accumulator {
         &self,
         descriptor: Descriptor,
         aggregator_builder: Arc<dyn AggregatorBuilder>,
-    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>>
-    {
+    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
         Ok(Arc::new(SyncInstrument {
             instrument: Arc::new(BaseInstrument {
                 meter: self.clone(),
@@ -80,8 +79,7 @@ impl MeterCore for Accumulator {
         &self,
         descriptor: Descriptor,
         aggregator_builder: Arc<dyn AggregatorBuilder>,
-    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>>
-    {
+    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
         Ok(Arc::new(AsyncInstrument {
             instrument: Arc::new(BaseInstrument {
                 meter: self.clone(),

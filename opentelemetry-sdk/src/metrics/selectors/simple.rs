@@ -1,6 +1,9 @@
 //! Simple Metric Selectors
 use crate::export::metrics::AggregatorSelector;
-use crate::metrics::aggregators::{Aggregator, AggregatorBuilder, HistogramAggregatorBuilder, LastValueAggregatorBuilder, SumAggregatorBuilder};
+use crate::metrics::aggregators::{
+    Aggregator, AggregatorBuilder, HistogramAggregatorBuilder, LastValueAggregatorBuilder,
+    SumAggregatorBuilder,
+};
 use crate::metrics::sdk_api::{Descriptor, InstrumentKind};
 use std::sync::Arc;
 
@@ -36,7 +39,9 @@ impl AggregatorSelector for HistogramSelector {
     fn aggregator_for(&self, descriptor: &Descriptor) -> Option<Arc<dyn Aggregator + Send + Sync>> {
         match descriptor.instrument_kind() {
             InstrumentKind::GaugeObserver => Some(LastValueAggregatorBuilder::default().build()),
-            InstrumentKind::Histogram => Some(HistogramAggregatorBuilder::new(self.0.clone()).build()),
+            InstrumentKind::Histogram => {
+                Some(HistogramAggregatorBuilder::new(self.0.clone()).build())
+            }
             _ => Some(SumAggregatorBuilder::default().build()),
         }
     }

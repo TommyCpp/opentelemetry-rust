@@ -123,7 +123,7 @@ impl View {
     /// The selector of instrument that this view is applied to, required.
     ///
     pub fn new(selector: InstrumentSelector) -> Self {
-        return View {
+        View {
             view_name: None,
             metrics_stream_desc: None,
             exported_attribute_keys: vec![],

@@ -65,8 +65,7 @@ impl MeterCore for UniqueInstrumentMeterCore {
         &self,
         descriptor: Descriptor,
         aggregator_builder: Arc<dyn AggregatorBuilder>,
-    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>>
-    {
+    ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
         self.state.lock().map_err(Into::into).and_then(|mut state| {
             let instrument = check_uniqueness(&state, &descriptor)?;
             match instrument {
@@ -87,8 +86,7 @@ impl MeterCore for UniqueInstrumentMeterCore {
         &self,
         descriptor: Descriptor,
         aggregator_builder: Arc<dyn AggregatorBuilder>,
-    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>>
-    {
+    ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
         self.state.lock().map_err(Into::into).and_then(|mut state| {
             let instrument = check_uniqueness(&state, &descriptor)?;
             match instrument {

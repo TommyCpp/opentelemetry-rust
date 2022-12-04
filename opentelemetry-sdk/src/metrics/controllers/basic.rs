@@ -13,6 +13,7 @@ use opentelemetry_api::{
     Context, InstrumentationLibrary,
 };
 
+use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::view::View;
 use crate::{
     export::metrics::{
@@ -30,7 +31,6 @@ use crate::{
     runtime::Runtime,
     Resource,
 };
-use crate::metrics::aggregators::AggregatorBuilder;
 
 /// DefaultPeriod is used for:
 ///
@@ -54,7 +54,7 @@ where
         collect_period: None,
         collect_timeout: None,
         push_timeout: None,
-        views: vec![]
+        views: vec![],
     }
 }
 
@@ -305,19 +305,29 @@ impl MeterProvider for BasicController {
         schema_url: Option<&'static str>,
     ) -> Meter {
         // select applicable view from the meter provider's view pool
-        let applicable_views: Vec<View> = self.0.views.iter().filter(|&view| {
-            let mut is_match = true;
-            if let Some(view_meter_name) = &view.selector.meter_name {
-                is_match = is_match && view_meter_name == name;
-            }
-            if let (Some(view_meter_version), Some(meter_version)) = (&view.selector.meter_version, version) {
-                is_match = is_match && view_meter_version == meter_version;
-            }
-            if let (Some(view_meter_schema_url), Some(meter_schema_url)) = (&view.selector.meter_schema_url, schema_url) {
-                is_match = is_match && view_meter_schema_url == meter_schema_url;
-            }
-            is_match
-        }).cloned().collect();
+        let applicable_views: Vec<View> = self
+            .0
+            .views
+            .iter()
+            .filter(|&view| {
+                let mut is_match = true;
+                if let Some(view_meter_name) = &view.selector.meter_name {
+                    is_match = is_match && view_meter_name == name;
+                }
+                if let (Some(view_meter_version), Some(meter_version)) =
+                    (&view.selector.meter_version, version)
+                {
+                    is_match = is_match && view_meter_version == meter_version;
+                }
+                if let (Some(view_meter_schema_url), Some(meter_schema_url)) =
+                    (&view.selector.meter_schema_url, schema_url)
+                {
+                    is_match = is_match && view_meter_schema_url == meter_schema_url;
+                }
+                is_match
+            })
+            .cloned()
+            .collect();
 
         self.0
             .meters
@@ -352,9 +362,10 @@ impl MeterCore for AccumulatorCheckpointer {
     fn new_sync_instrument(
         &self,
         descriptor: Descriptor,
-        aggregator_builder: Arc<dyn AggregatorBuilder>
+        aggregator_builder: Arc<dyn AggregatorBuilder>,
     ) -> Result<Arc<dyn SyncInstrumentCore + Send + Sync>> {
-        self.accumulator.new_sync_instrument(descriptor, aggregator_builder)
+        self.accumulator
+            .new_sync_instrument(descriptor, aggregator_builder)
     }
 
     fn new_async_instrument(
@@ -362,7 +373,8 @@ impl MeterCore for AccumulatorCheckpointer {
         descriptor: Descriptor,
         aggregator_builder: Arc<dyn AggregatorBuilder>,
     ) -> Result<Arc<dyn AsyncInstrumentCore + Send + Sync>> {
-        self.accumulator.new_async_instrument(descriptor, aggregator_builder)
+        self.accumulator
+            .new_async_instrument(descriptor, aggregator_builder)
     }
 
     fn register_callback(&self, f: Box<dyn Fn(&Context) + Send + Sync>) -> Result<()> {
