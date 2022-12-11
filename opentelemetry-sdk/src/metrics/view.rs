@@ -21,7 +21,8 @@
 //! the output will contains multiple metrics stream with same name. Thus, the instrument selector of a named view
 //! should match only one instrument.
 //!
-//! For view without a name, SDK will
+//! For view without a name, SDK will use the name of the instrument name as the name of the metrics stream.
+//!
 
 use crate::metrics::aggregators::AggregatorBuilder;
 use crate::metrics::sdk_api::InstrumentKind;
@@ -97,6 +98,32 @@ impl InstrumentSelector {
     pub fn with_meter_schema_url(mut self, meter_schema_url: String) -> Self {
         self.meter_schema_url = Some(meter_schema_url);
         self
+    }
+
+    /// How many conditions this selector contains.
+    /// We always want to apply the most accurate view to an instrument, it means the of all the views
+    /// that matches an instrument, we want to select the one with most conditions.
+    pub(crate) fn selector_num(&self) -> i32 {
+        let mut count = 0;
+        if self.instrument_kind.is_some() {
+            count += 1
+        }
+        if self.instrument_name != "*" {
+            count += 1
+        }
+        if self.meter_name.is_some() {
+            count += 1
+        }
+        if self.instrument_unit.is_some() {
+            count += 1
+        }
+        if self.meter_schema_url.is_some() {
+            count += 1
+        }
+        if self.meter_schema_url.is_some() {
+            count += 1
+        }
+        count
     }
 
     // todo: add support to set InstrumentScope/InstrumentLibrary

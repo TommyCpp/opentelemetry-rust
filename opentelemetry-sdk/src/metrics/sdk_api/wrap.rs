@@ -27,11 +27,12 @@ pub fn wrap_meter_core(
 
 struct MeterImpl {
     core: Arc<dyn MeterCore + Send + Sync>,
-    views: Vec<View>,
+    views: Vec<View>, // sort by the selector's specificity from high to low
 }
 
 impl MeterImpl {
-    fn new(core: Arc<dyn MeterCore + Send + Sync>, views: Vec<View>) -> Self {
+    fn new(core: Arc<dyn MeterCore + Send + Sync>, mut views: Vec<View>) -> Self {
+        views.sort_by(|a, b| a.selector.selector_num().cmp(&b.selector.selector_num()));
         MeterImpl { core, views }
     }
 
@@ -41,6 +42,7 @@ impl MeterImpl {
         instrument_unit: &Option<Unit>,
         instrument_kind: InstrumentKind,
     ) -> Arc<dyn AggregatorBuilder> {
+        // note that the view is already sorted by the selector's specificity.
         let candidates = self
             .views
             .iter()
