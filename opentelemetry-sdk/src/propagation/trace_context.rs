@@ -143,7 +143,7 @@ impl TextMapPropagator for TraceContextPropagator {
 #[cfg(all(test, feature = "testing", feature = "trace"))]
 mod tests {
     use super::*;
-    use crate::testing::trace::TestSpan;
+    use opentelemetry_api::testing::trace::TestSpan;
     use opentelemetry_api::{
         propagation::{Extractor, Injector, TextMapPropagator},
         trace::{SpanContext, SpanId, TraceId},

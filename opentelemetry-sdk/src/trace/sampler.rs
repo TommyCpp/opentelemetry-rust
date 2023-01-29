@@ -262,8 +262,8 @@ pub(crate) fn sample_based_on_probability(prob: &f64, trace_id: TraceId) -> Samp
 #[cfg(all(test, feature = "testing", feature = "trace"))]
 mod tests {
     use super::*;
-    use crate::testing::trace::TestSpan;
     use crate::trace::{Sampler, ShouldSample};
+    use opentelemetry_api::testing::trace::TestSpan;
     use opentelemetry_api::trace::{SamplingDecision, SpanContext, SpanId, TraceFlags, TraceState};
     use rand::Rng;
 

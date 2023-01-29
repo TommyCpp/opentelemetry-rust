@@ -274,10 +274,10 @@ impl opentelemetry_api::trace::Tracer for Tracer {
 #[cfg(all(test, feature = "testing", feature = "trace"))]
 mod tests {
     use crate::{
-        testing::trace::TestSpan,
         trace::{Config, Sampler, ShouldSample},
         InstrumentationLibrary,
     };
+    use opentelemetry_api::testing::trace::TestSpan;
     use opentelemetry_api::{
         trace::{
             Link, OrderMap, SamplingDecision, SamplingResult, Span, SpanContext, SpanId, SpanKind,

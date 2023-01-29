@@ -304,29 +304,24 @@ struct BatchSpanProcessorInternal<R> {
 
 impl<R: TraceRuntime> BatchSpanProcessorInternal<R> {
     async fn flush(&mut self, res_channel: Option<oneshot::Sender<ExportResult>>) {
-        let export_task = self.export();
-        let task = Box::pin(async move {
-            let result = export_task.await;
+        match self.export_one_batch() {
+            Some(export_task) => {
+                let task = Box::pin(async move {
+                    let result = export_task.await;
+                    Self::send_export_result(result, res_channel);
+                    Ok(())
+                });
 
-            if let Some(channel) = res_channel {
-                if let Err(result) = channel.send(result) {
-                    global::handle_error(TraceError::from(format!(
-                        "failed to send flush result: {:?}",
-                        result
-                    )));
+                if self.config.max_concurrent_exports == 1 {
+                    let _ = task.await;
+                } else {
+                    self.export_tasks.push(task);
+                    while self.export_tasks.next().await.is_some() {}
                 }
-            } else if let Err(err) = result {
-                global::handle_error(err);
             }
-
-            Ok(())
-        });
-
-        if self.config.max_concurrent_exports == 1 {
-            let _ = task.await;
-        } else {
-            self.export_tasks.push(task);
-            while self.export_tasks.next().await.is_some() {}
+            None => {
+                Self::send_export_result(Ok(()), res_channel);
+            }
         }
     }
 
@@ -347,19 +342,20 @@ impl<R: TraceRuntime> BatchSpanProcessorInternal<R> {
                         self.export_tasks.next().await;
                     }
 
-                    let export_task = self.export();
-                    let task = async move {
-                        if let Err(err) = export_task.await {
-                            global::handle_error(err);
-                        }
+                    if let Some(export_task) = self.export_one_batch() {
+                        let task = async move {
+                            if let Err(err) = export_task.await {
+                                global::handle_error(err);
+                            }
 
-                        Ok(())
-                    };
-                    // Special case when not using concurrent exports
-                    if self.config.max_concurrent_exports == 1 {
-                        let _ = task.await;
-                    } else {
-                        self.export_tasks.push(Box::pin(task));
+                            Ok(())
+                        };
+                        // Special case when not using concurrent exports
+                        if self.config.max_concurrent_exports == 1 {
+                            let _ = task.await;
+                        } else {
+                            self.export_tasks.push(Box::pin(task));
+                        }
                     }
                 }
             }
@@ -397,23 +393,23 @@ impl<R: TraceRuntime> BatchSpanProcessorInternal<R> {
         true
     }
 
-    fn export(&mut self) -> BoxFuture<'static, ExportResult> {
+    fn export_one_batch(&mut self) -> Option<BoxFuture<'static, ExportResult>> {
         // Batch size check for flush / shutdown. Those methods may be called
         // when there's no work to do.
         if self.spans.is_empty() {
-            return Box::pin(future::ready(Ok(())));
+            return None;
         }
 
         let export = self.exporter.export(self.spans.split_off(0));
-        let timeout = self.runtime.delay(self.config.max_export_timeout);
-        let time_out = self.config.max_export_timeout;
+        let timeout_task = self.runtime.delay(self.config.max_export_timeout);
+        let timeout = self.config.max_export_timeout;
 
-        Box::pin(async move {
-            match future::select(export, timeout).await {
+        Some(Box::pin(async move {
+            match future::select(export, timeout_task).await {
                 Either::Left((export_res, _)) => export_res,
-                Either::Right((_, _)) => ExportResult::Err(TraceError::ExportTimedOut(time_out)),
+                Either::Right((_, _)) => ExportResult::Err(TraceError::ExportTimedOut(timeout)),
             }
-        })
+        }))
     }
 
     async fn run(mut self, mut messages: impl Stream<Item = BatchMessage> + Unpin + FusedStream) {
@@ -435,6 +431,22 @@ impl<R: TraceRuntime> BatchSpanProcessorInternal<R> {
                     }
                 },
             }
+        }
+    }
+
+    fn send_export_result(
+        result: ExportResult,
+        res_channel: Option<oneshot::Sender<ExportResult>>,
+    ) {
+        if let Some(channel) = res_channel {
+            if let Err(result) = channel.send(result) {
+                global::handle_error(TraceError::from(format!(
+                    "failed to send flush result: {:?}",
+                    result
+                )));
+            }
+        } else if let Err(err) = result {
+            global::handle_error(err);
         }
     }
 }
@@ -692,19 +704,21 @@ mod tests {
     };
     use crate::export::trace::{stdout, ExportResult, SpanData, SpanExporter};
     use crate::runtime;
-    use crate::testing::trace::{
-        new_test_export_span_data, new_test_exporter, new_tokio_test_exporter,
-    };
+    use crate::testing::trace::{new_test_export_span_data, TestSpanExporter, TokioSpanExporter};
     use crate::trace::{BatchConfig, EvictedHashMap, EvictedQueue};
     use async_trait::async_trait;
+    use opentelemetry_api::global;
+    use opentelemetry_api::global::Error;
     use opentelemetry_api::trace::{SpanContext, SpanId, SpanKind, Status};
     use std::fmt::Debug;
     use std::future::Future;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::Arc;
     use std::time::Duration;
 
     #[test]
     fn simple_span_processor_on_end_calls_export() {
-        let (exporter, rx_export, _rx_shutdown) = new_test_exporter();
+        let (exporter, rx_export, _rx_shutdown) = TestSpanExporter::new();
         let mut processor = SimpleSpanProcessor::new(Box::new(exporter));
         processor.on_end(new_test_export_span_data());
         assert!(rx_export.recv().is_ok());
@@ -713,7 +727,7 @@ mod tests {
 
     #[test]
     fn simple_span_processor_on_end_skips_export_if_not_sampled() {
-        let (exporter, rx_export, _rx_shutdown) = new_test_exporter();
+        let (exporter, rx_export, _rx_shutdown) = TestSpanExporter::new();
         let processor = SimpleSpanProcessor::new(Box::new(exporter));
         let unsampled = SpanData {
             span_context: SpanContext::empty_context(),
@@ -735,7 +749,7 @@ mod tests {
 
     #[test]
     fn simple_span_processor_shutdown_calls_shutdown() {
-        let (exporter, _rx_export, rx_shutdown) = new_test_exporter();
+        let (exporter, _rx_export, rx_shutdown) = TestSpanExporter::new();
         let mut processor = SimpleSpanProcessor::new(Box::new(exporter));
         let _result = processor.shutdown();
         assert!(rx_shutdown.try_recv().is_ok());
@@ -793,7 +807,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_batch_span_processor() {
-        let (exporter, mut export_receiver, _shutdown_receiver) = new_tokio_test_exporter();
+        let (exporter, mut export_receiver, _shutdown_receiver) = TokioSpanExporter::new();
         let config = BatchConfig {
             scheduled_delay: Duration::from_secs(60 * 60 * 24), // set the tick to 24 hours so we know the span must be exported via force_flush
             ..Default::default()
@@ -934,5 +948,54 @@ mod tests {
         }
         let shutdown_res = processor.shutdown();
         assert!(shutdown_res.is_ok());
+    }
+
+    // batch span processor should drop spans when the channel is full and should never cause an OOM
+    #[test]
+    fn test_dropping_span_on_channel_full() {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .expect("cannot start tokio runtime")
+            .block_on(async move {
+                // setup
+                let timeout_second = 3600;
+                let queue_size = 5;
+                let config = BatchConfig {
+                    max_queue_size: queue_size,
+                    max_export_batch_size: queue_size,
+                    scheduled_delay: Duration::from_secs(60 * 60 * 24), // set the tick to 24 hours to avoid flush
+                    max_concurrent_exports: 1, // don't enable concurrent exports
+                    max_export_timeout: Duration::from_secs(timeout_second),
+                };
+                let exporter = BlockingExporter {
+                    // assume the exporter is experiencing a high latency
+                    delay_for: Duration::from_secs(timeout_second + 60),
+                    delay_fn: tokio::time::sleep,
+                };
+                let processor = BatchSpanProcessor::new(Box::new(exporter), config, runtime::Tokio);
+
+                // use global error handler to capture dropped spans
+                // todo: use a mock tracer provider to capture dropped spans?
+                let dropped_span_counter = Arc::new(AtomicU64::new(0));
+                let dropped_span_counter_ref = dropped_span_counter.clone();
+                global::set_error_handler(Box::new(move |err: Error| {
+                    if err.to_string().contains("channel is full") {
+                        // count how many spans are dropped
+                        dropped_span_counter_ref.fetch_add(1, Ordering::Relaxed);
+                    } else {
+                        println!("{err}");
+                    }
+                }))
+                .expect("cannot set global error handling function to capture dropped spans");
+
+                // assume the exporter is stuck, then we will have QUEUE_SIZE spans in BatchSpanProcessorInternal span buffer
+                // and another QUEUE_SIZE spans in the channel.
+                for _ in 0..queue_size * 2 + 10 {
+                    processor.on_end(new_test_export_span_data());
+                }
+
+                assert_eq!(dropped_span_counter.load(Ordering::SeqCst), 10);
+            });
     }
 }

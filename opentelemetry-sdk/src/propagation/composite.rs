@@ -110,7 +110,7 @@ impl TextMapPropagator for TextMapCompositePropagator {
 #[cfg(all(test, feature = "testing", feature = "trace"))]
 mod tests {
     use crate::propagation::{TextMapCompositePropagator, TraceContextPropagator};
-    use crate::testing::trace::TestSpan;
+    use opentelemetry_api::testing::trace::TestSpan;
     use opentelemetry_api::{
         propagation::{text_map_propagator::FieldIter, Extractor, Injector, TextMapPropagator},
         trace::{SpanContext, SpanId, TraceContextExt, TraceFlags, TraceId, TraceState},
