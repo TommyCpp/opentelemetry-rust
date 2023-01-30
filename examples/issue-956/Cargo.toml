@@ -1,0 +1,18 @@
+[package]
+name = "issue-956"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+opentelemetry = { version = "0.18", default-features = false, features = ["rt-tokio", "trace"] }
+opentelemetry-jaeger = { version = "0.17", default-features = false, features = ["rt-tokio", "collector_client", "reqwest_collector_client"] }
+opentelemetry-http = "0.7.0"
+async-trait = "0.1.63"
+http = "0.2.8"
+bytes = "1.3.0"
+tracing = { version = "0.1", default-features = false, features = ["std", "attributes", "release_max_level_debug"] }
+tracing-opentelemetry = { version = "0.18", default-features = false, features = ["tracing-log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "json", "smallvec", "std", "tracing-log"] }
+tokio = { version = "1.25.0" }

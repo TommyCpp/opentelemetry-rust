@@ -35,6 +35,7 @@ members = [
     "examples/jaeger-remote-sampler",
     "examples/zipkin",
     "examples/multiple-span-processors",
-    "examples/zpages"
+    "examples/zpages",
+    "examples/issue-956"
 ]
 exclude = ["examples/external-otlp-grpcio-async-std"]
