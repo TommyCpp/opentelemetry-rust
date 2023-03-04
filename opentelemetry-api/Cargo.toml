@@ -24,9 +24,6 @@ urlencoding = "2.1.2"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-js-sys = "0.3"
-
 [features]
 default = ["trace"]
 trace = ["pin-project-lite"]
