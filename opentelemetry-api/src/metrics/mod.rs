@@ -19,7 +19,7 @@ pub use instruments::{
     },
     InstrumentBuilder,
 };
-pub use meter::{Meter, MeterProvider};
+pub use meter::{Meter_OLD, MeterProvider};
 
 /// A specialized `Result` type for metric operations.
 pub type Result<T> = result::Result<T, MetricsError>;

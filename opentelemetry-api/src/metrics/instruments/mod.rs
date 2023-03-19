@@ -1,7 +1,8 @@
-use crate::metrics::{Meter, MetricsError, Result, Unit};
+use crate::metrics::{Meter_OLD, MetricsError, Result, Unit};
 use core::fmt;
 use std::convert::TryFrom;
 use std::marker;
+use crate::metrics::meter::Meter;
 
 pub(super) mod counter;
 pub(super) mod gauge;
@@ -20,7 +21,7 @@ const INSTRUMENT_UNIT_INVALID_CHAR: &str = "characters in instrument unit must b
 
 /// Configuration for building an instrument.
 pub struct InstrumentBuilder<'a, T> {
-    meter: &'a Meter,
+    meter: &'a dyn Meter_OLD,
     name: String,
     description: Option<String>,
     unit: Option<Unit>,
@@ -32,7 +33,7 @@ where
     T: TryFrom<Self, Error = MetricsError>,
 {
     /// Create a new instrument builder
-    pub(crate) fn new(meter: &'a Meter, name: String) -> Self {
+    pub(crate) fn new(meter: &'a dyn Meter, name: String) -> Self {
         InstrumentBuilder {
             meter,
             name,
@@ -132,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_instrument_config_validation() {
-        let meter = crate::metrics::Meter::new(
+        let meter = crate::metrics::Meter_OLD::new(
             InstrumentationLibrary::default(),
             Arc::new(NoopMeterCore::new()),
         );

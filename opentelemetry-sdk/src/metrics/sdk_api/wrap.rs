@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use opentelemetry_api::metrics::{
-    AsyncCounter, AsyncGauge, AsyncUpDownCounter, Counter, Histogram, InstrumentProvider, Meter,
+    AsyncCounter, AsyncGauge, AsyncUpDownCounter, Counter, Histogram, InstrumentProvider, Meter_OLD,
     ObservableCounter, ObservableGauge, ObservableUpDownCounter, Result, SyncCounter,
     SyncHistogram, SyncUpDownCounter, Unit, UpDownCounter,
 };
@@ -21,8 +21,8 @@ pub fn wrap_meter_core(
     core: Arc<dyn MeterCore + Send + Sync>,
     library: InstrumentationLibrary,
     filtered_views: Vec<View>,
-) -> Meter {
-    Meter::new(library, Arc::new(MeterImpl::new(core, filtered_views)))
+) -> Meter_OLD {
+    Meter_OLD::new(library, Arc::new(MeterImpl::new(core, filtered_views)))
 }
 
 struct MeterImpl {

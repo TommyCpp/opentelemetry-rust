@@ -90,7 +90,7 @@
 //! ```
 //! # #[cfg(feature="metrics")]
 //! # {
-//! use opentelemetry_api::metrics::{Meter, noop::NoopMeterProvider};
+//! use opentelemetry_api::metrics::{Meter_OLD, noop::NoopMeterProvider};
 //! use opentelemetry_api::{global, Context, KeyValue};
 //!
 //! fn init_meter() {

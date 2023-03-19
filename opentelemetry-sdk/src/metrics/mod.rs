@@ -31,6 +31,7 @@ pub mod registry;
 pub mod sdk_api;
 pub mod selectors;
 pub mod view;
+pub mod provider;
 
 /// Creates a new accumulator builder
 pub fn accumulator(processor: Arc<dyn Processor + Send + Sync>) -> Accumulator {

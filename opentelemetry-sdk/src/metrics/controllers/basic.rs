@@ -9,7 +9,7 @@ use futures_channel::{mpsc, oneshot};
 use futures_util::{stream, StreamExt};
 use opentelemetry_api::{
     global,
-    metrics::{noop, Meter, MeterProvider, MetricsError, Result},
+    metrics::{noop, Meter_OLD, MeterProvider, MetricsError, Result},
     Context, InstrumentationLibrary,
 };
 
@@ -303,7 +303,7 @@ impl MeterProvider for BasicController {
         name: &'static str,
         version: Option<&'static str>,
         schema_url: Option<&'static str>,
-    ) -> Meter {
+    ) -> Meter_OLD {
         // select applicable view from the meter provider's view pool
         let applicable_views: Vec<View> = self
             .0

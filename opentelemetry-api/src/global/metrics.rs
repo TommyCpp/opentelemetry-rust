@@ -1,4 +1,4 @@
-use crate::metrics::{self, Meter, MeterProvider};
+use crate::metrics::{self, Meter_OLD, MeterProvider};
 use core::fmt;
 use once_cell::sync::Lazy;
 use std::sync::{Arc, RwLock};
@@ -29,7 +29,7 @@ impl MeterProvider for GlobalMeterProvider {
         name: &'static str,
         version: Option<&'static str>,
         schema_url: Option<&'static str>,
-    ) -> Meter {
+    ) -> Meter_OLD {
         self.provider.versioned_meter(name, version, schema_url)
     }
 }
@@ -67,16 +67,16 @@ pub fn meter_provider() -> GlobalMeterProvider {
         .clone()
 }
 
-/// Creates a named [`Meter`] via the configured [`GlobalMeterProvider`].
+/// Creates a named [`Meter_OLD`] via the configured [`GlobalMeterProvider`].
 ///
 /// If the name is an empty string, the provider will use a default name.
 ///
 /// This is a more convenient way of expressing `global::meter_provider().meter(name, None, None)`.
-pub fn meter(name: &'static str) -> Meter {
+pub fn meter(name: &'static str) -> Meter_OLD {
     meter_provider().versioned_meter(name, None, None)
 }
 
-/// Creates a [`Meter`] with the name, version and schema url.
+/// Creates a [`Meter_OLD`] with the name, version and schema url.
 ///
 /// - name SHOULD uniquely identify the instrumentation scope, such as the instrumentation library (e.g. io.opentelemetry.contrib.mongodb), package, module or class name.
 /// - version specifies the version of the instrumentation scope if the scope has a version
@@ -93,6 +93,6 @@ pub fn meter_with_version(
     name: &'static str,
     version: Option<&'static str>,
     schema_url: Option<&'static str>,
-) -> Meter {
+) -> Meter_OLD {
     meter_provider().versioned_meter(name, version, schema_url)
 }

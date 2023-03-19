@@ -2,7 +2,7 @@ use criterion::{
     criterion_group, criterion_main, measurement::Measurement, BenchmarkGroup, BenchmarkId,
     Criterion,
 };
-use opentelemetry_api::{metrics::Meter, Context, InstrumentationLibrary, Key, KeyValue};
+use opentelemetry_api::{metrics::Meter_OLD, Context, InstrumentationLibrary, Key, KeyValue};
 use opentelemetry_sdk::metrics::aggregators::AggregatorBuilder;
 use opentelemetry_sdk::{
     export::metrics::{AggregatorSelector, Processor},
@@ -105,7 +105,7 @@ impl Processor for BenchProcessor {
     }
 }
 
-fn build_meter() -> Meter {
+fn build_meter() -> Meter_OLD {
     let processor = Arc::new(BenchProcessor::default());
     let core = accumulator(processor);
     let library = InstrumentationLibrary::new("benches", None, None);
