@@ -365,8 +365,10 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::redundant_clone)]
     fn clone_a_parent_sampler() {
         let sampler = Sampler::ParentBased(Box::new(Sampler::AlwaysOn));
+
         let cloned_sampler = sampler.clone();
 
         let cx = Context::current_with_value("some_value");
