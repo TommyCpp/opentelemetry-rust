@@ -36,9 +36,9 @@
 //! # }
 //! ```
 //!
-//! See the [examples] directory for different integration patterns.
+//! See the [example] directory for different integration patterns.
 //!
-//! [examples]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
+//! [example]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
 //!
 //! # Traces
 //!

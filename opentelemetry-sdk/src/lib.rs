@@ -32,12 +32,12 @@
 //! # }
 //! ```
 //!
-//! See the [examples] directory for different integration patterns.
+//! See the [example] directory for different integration patterns.
 //!
 //! See the API [`trace`] module docs for more information on creating and managing
 //! spans.
 //!
-//! [examples]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
+//! [example]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
 //! [`trace`]: https://docs.rs/opentelemetry_api/latest/opentelemetry_api/trace/index.html
 //!
 //! # Metrics (Beta)
@@ -65,12 +65,12 @@
 //! # }
 //! ```
 //!
-//! See the [examples] directory for different integration patterns.
+//! See the [example] directory for different integration patterns.
 //!
 //! See the API [`metrics`] module docs for more information on creating and
 //! managing instruments.
 //!
-//! [examples]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
+//! [example]: https://github.com/open-telemetry/opentelemetry-rust/tree/main/examples
 //! [`metrics`]: https://docs.rs/opentelemetry_api/latest/opentelemetry_api/metrics/index.html
 //!
 //! ## Crate Feature Flags
