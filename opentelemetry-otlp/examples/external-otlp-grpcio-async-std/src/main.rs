@@ -7,7 +7,6 @@
 //! OTLP_GRPCIO_X_HONEYCOMB_DATASET=dataset \
 //! cargo run --bin external-otlp-grpcio-async-std
 //! ```
-use async_std::task::sleep;
 use opentelemetry::{
     global::{shutdown_tracer_provider, tracer},
     sdk::trace as sdktrace,
@@ -22,7 +21,6 @@ use std::{
     collections::HashMap,
     env::{remove_var, set_var, var, vars},
     error::Error,
-    time::Duration,
 };
 
 // Use the variables to try and export the example to any external collector that accepts otlp
@@ -46,7 +44,7 @@ fn init_tracer() -> Result<sdktrace::Tracer, TraceError> {
             let header_name = name
                 .strip_prefix(HEADER_PREFIX)
                 .unwrap()
-                .replace("_", "-")
+                .replace('_', "-")
                 .to_ascii_lowercase();
             (header_name, value)
         })
