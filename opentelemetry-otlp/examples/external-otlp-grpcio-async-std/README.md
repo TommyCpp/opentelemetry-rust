@@ -8,7 +8,7 @@ With this example, you can export to any service that supports OTLP by using env
 The following example exports data to Honeycomb:
 
 ```shell
-cd example/external-otlp-grpcio-async-std/
+cd opentelemetry-otlp/examples/external-otlp-grpcio-async-std/
 OTLP_GRPCIO_ENDPOINT=https://api.honeycomb.io:443 \
 OTLP_GRPCIO_X_HONEYCOMB_TEAM=token \
 OTLP_GRPCIO_X_HONEYCOMB_DATASET=dataset \
