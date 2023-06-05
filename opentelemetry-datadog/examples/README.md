@@ -9,7 +9,8 @@ First run version 7.22.0 or above of the datadog-agent locally as described [her
 Then run the example to report spans:
 
 ```shell
-$ cargo run
+# cd opentelemetry-datadog
+$ cargo run --example datadog
 ```
 
 Traces should appear in the datadog APM dashboard

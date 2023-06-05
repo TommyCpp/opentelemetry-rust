@@ -48,4 +48,4 @@ opentelemetry = { path = "../opentelemetry", features = ["trace", "testing"] }
 
 [[example]]
 name = "datadog"
-path = "examples/src/main.rs"
+path = "examples/datadog.rs"
