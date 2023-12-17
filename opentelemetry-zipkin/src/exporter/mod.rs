@@ -60,42 +60,8 @@ pub struct ZipkinPipelineBuilder {
 
 impl Default for ZipkinPipelineBuilder {
     fn default() -> Self {
-        let timeout = env::get_timeout();
         ZipkinPipelineBuilder {
-            #[cfg(feature = "reqwest-blocking-client")]
-            client: Some(Arc::new(
-                reqwest::blocking::Client::builder()
-                    .timeout(timeout)
-                    .build()
-                    .unwrap_or_else(|_| reqwest::blocking::Client::new()),
-            )),
-            #[cfg(all(
-                not(feature = "reqwest-blocking-client"),
-                not(feature = "surf-client"),
-                feature = "reqwest-client"
-            ))]
-            client: Some(Arc::new(
-                reqwest::Client::builder()
-                    .timeout(timeout)
-                    .build()
-                    .unwrap_or_else(|_| reqwest::Client::new()),
-            )),
-            #[cfg(all(
-                not(feature = "reqwest-client"),
-                not(feature = "reqwest-blocking-client"),
-                feature = "surf-client"
-            ))]
-            client: Some(Arc::new(
-                surf::Client::try_from(surf::Config::new().set_timeout(Some(timeout)))
-                    .unwrap_or_else(|_| surf::Client::new()),
-            )),
-            #[cfg(all(
-                not(feature = "reqwest-client"),
-                not(feature = "surf-client"),
-                not(feature = "reqwest-blocking-client")
-            ))]
             client: None,
-
             service_name: None,
             service_addr: None,
             collector_endpoint: env::get_endpoint(),
@@ -207,10 +173,25 @@ impl ZipkinPipelineBuilder {
         self
     }
 
-    /// Assign client implementation
+    /// Sets a custom HTTP client for the current instance.
+    ///
+    /// This method allows setting a specific implementation of the `HttpClient` trait.
+    ///
     pub fn with_http_client<T: HttpClient + 'static>(mut self, client: T) -> Self {
         self.client = Some(Arc::new(client));
         self
+    }
+
+    /// Sets a custom HTTP client with a specified timeout for the current instance.
+    ///
+    /// Similar to [`with_http_client`], but it will pass the timeout from the environments variables
+    /// to the http client builder closure
+    pub fn with_http_client_timeout<F, T>(self, client_builder: F) -> Self
+    where
+        F: FnOnce(Duration) -> T,
+        T: HttpClient + 'static,
+    {
+        self.with_http_client(client_builder(env::get_timeout()))
     }
 
     /// Assign the service name under which to group traces.
