@@ -40,39 +40,6 @@ pub(crate) struct HttpConfig {
     headers: Option<HashMap<String, String>>,
 }
 
-#[cfg(any(
-    feature = "reqwest-blocking-client",
-    feature = "reqwest-client",
-    feature = "surf-client"
-))]
-impl Default for HttpConfig {
-    fn default() -> Self {
-        HttpConfig {
-            #[cfg(feature = "reqwest-blocking-client")]
-            client: Some(Arc::new(reqwest::blocking::Client::new())),
-            #[cfg(all(
-                not(feature = "reqwest-blocking-client"),
-                not(feature = "surf-client"),
-                feature = "reqwest-client"
-            ))]
-            client: Some(Arc::new(reqwest::Client::new())),
-            #[cfg(all(
-                not(feature = "reqwest-client"),
-                not(feature = "reqwest-blocking-client"),
-                feature = "surf-client"
-            ))]
-            client: Some(Arc::new(surf::Client::new())),
-            #[cfg(all(
-                not(feature = "reqwest-client"),
-                not(feature = "surf-client"),
-                not(feature = "reqwest-blocking-client")
-            ))]
-            client: None,
-            headers: None,
-        }
-    }
-}
-
 /// Configuration for the OTLP HTTP exporter.
 ///
 /// ## Examples
