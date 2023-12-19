@@ -18,33 +18,33 @@
 | Get active Span                                                                                  |          |
 | Mark Span active                                                                                 |          |
 | [SpanContext](specification/trace/api.md#spancontext)                                            |          |
-| IsValid                                                                                          |          |
-| IsRemote                                                                                         |          |
-| Conforms to the W3C TraceContext spec                                                            |          |
+| IsValid                                                                                          | ?, can add as event or metadata |
+| IsRemote                                                                                         | ?, can add as event or metadata |
+| Conforms to the W3C TraceContext spec                                                            | x        |
 | [Span](specification/trace/api.md#span)                                                          | Optional |
 | Create root span                                                                                 | +        |
 | Create with default parent (active span)                                                         | +        |
 | Create with parent from Context                                                                  | +        |
 | No explicit parent Span/SpanContext allowed                                                      |          |
 | SpanProcessor.OnStart receives parent Context                                                    |          |
-| UpdateName                                                                                       |          |
+| UpdateName                                                                                       | -        |
 | User-defined start timestamp                                                                     |          |
-| End                                                                                              |          |
-| End with timestamp                                                                               |          |
-| IsRecording                                                                                      |          |
-| IsRecording becomes false after End                                                              |          |
-| Set status with StatusCode (Unset, Ok, Error)                                                    |          |
-| Safe for concurrent calls                                                                        |          |
-| events collection size limit                                                                     |          |
-| attribute collection size limit                                                                  |          |
-| links collection size limit                                                                      |          |
+| End                                                                                              | +, when guard drops |
+| End with timestamp                                                                               | x        |
+| IsRecording                                                                                      | ?, can add attributes or metadata |
+| IsRecording becomes false after End                                                              | x        |
+| Set status with StatusCode (Unset, Ok, Error)                                                    | ?, can add as event or metadata |
+| Safe for concurrent calls                                                                        | +        |
+| events collection size limit                                                                     | -        |
+| attribute collection size limit                                                                  | -        |
+| links collection size limit                                                                      | -        |
 | [Span attributes](specification/trace/api.md#set-attributes)                                     | Optional |
-| SetAttribute                                                                                     |          |
+| SetAttribute                                                                                     | +        |
 | Set order preserved                                                                              | X        |
-| String type                                                                                      |          |
-| Boolean type                                                                                     |          |
-| Double floating-point type                                                                       |          |
-| Signed int64 type                                                                                |          |
+| String type                                                                                      | +        |
+| Boolean type                                                                                     | +        |
+| Double floating-point type                                                                       | +        |
+| Signed int64 type                                                                                | +        |
 | Array of primitives (homogeneous)                                                                |          |
 | `null` values documented as invalid/undefined                                                    |          |
 | Unicode support for keys and string values                                                       |          |
