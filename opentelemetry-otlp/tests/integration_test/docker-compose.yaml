@@ -1,8 +1,10 @@
 version: '3.7'
 
 services:
-  my-rust-app:
-    build: ./path_to_your_rust_app
+  integration-test-runner:
+    build:
+      context: ../../..
+      dockerfile: ./opentelemetry-otlp/tests/integration_test/Dockerfile
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on:
@@ -13,6 +15,9 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      # we have to create the file for the container otherwise we will encounter a permission denied error.
+      # see https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/3159
+      - ./traces.json:/testresults/traces.json
     ports:
       - "4317:4317" # gRPC port
       - "4318:4318" # HTTP port
