@@ -53,9 +53,9 @@
 | Links can be recorded after span creation                                                        |          |
 | Links order is preserved                                                                         |          |
 | [Span events](specification/trace/api.md#add-events)                                             |          |
-| AddEvent                                                                                         |          |
-| Add order preserved                                                                              |          |
-| Safe for concurrent calls                                                                        |          |
+| AddEvent                                                                                         |+         |
+| Add order preserved                                                                              |+|
+| Safe for concurrent calls                                                                        |+         |
 | [Span exceptions](specification/trace/api.md#record-exception)                                   |          |
 | RecordException                                                                                  |          |
 | RecordException with extra parameters                                                            |          |
