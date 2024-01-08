@@ -1,17 +1,17 @@
  Feature                                                                                          | Tokio Tracing |
 |--------------------------------------------------------------------------------------------------|----------|
 | [TracerProvider](specification/trace/api.md#tracerprovider-operations)                           |          |
-| Create TracerProvider                                                                            |          |
-| Get a Tracer                                                                                     |          |
-| Get a Tracer with schema_url                                                                     |          |
-| Get a Tracer with scope attributes                                                               |          |
-| Associate Tracer with InstrumentationScope                                                       |          |
-| Safe for concurrent calls                                                                        |          |
-| Shutdown (SDK only required)                                                                     |          |
-| ForceFlush (SDK only required)                                                                   |          |
+| Create TracerProvider                                                                            |x         |
+| Get a Tracer                                                                                     |x         |
+| Get a Tracer with schema_url                                                                     |x         |
+| Get a Tracer with scope attributes                                                               |x         |
+| Associate Tracer with InstrumentationScope                                                       |x         |
+| Safe for concurrent calls                                                                        |+         |
+| Shutdown (SDK only required)                                                                     |x         |
+| ForceFlush (SDK only required)                                                                   |x         |
 | [Trace / Context interaction](specification/trace/api.md#context-interaction)                    |          |
-| Get active Span                                                                                  |          |
-| Set active Span                                                                                  |          |
+| Get active Span                                                                                  |+         |
+| Set active Span                                                                                  |+         |
 | [Tracer](specification/trace/api.md#tracer-operations)                                           | Optional |
 | Create a new Span                                                                                |          |
 | Documentation defines adding attributes at span creation as preferred                            |          |
