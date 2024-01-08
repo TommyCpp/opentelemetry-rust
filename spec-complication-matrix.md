@@ -1,21 +1,21 @@
  Feature                                                                                          | Tokio Tracing |
 |--------------------------------------------------------------------------------------------------|----------|
 | [TracerProvider](specification/trace/api.md#tracerprovider-operations)                           |          |
-| Create TracerProvider                                                                            |x         |
-| Get a Tracer                                                                                     |x         |
-| Get a Tracer with schema_url                                                                     |x         |
-| Get a Tracer with scope attributes                                                               |x         |
-| Associate Tracer with InstrumentationScope                                                       |x         |
+| Create TracerProvider                                                                            |-         |
+| Get a Tracer                                                                                     |-         |
+| Get a Tracer with schema_url                                                                     |-         |
+| Get a Tracer with scope attributes                                                               |-         |
+| Associate Tracer with InstrumentationScope                                                       |-         |
 | Safe for concurrent calls                                                                        |+         |
-| Shutdown (SDK only required)                                                                     |x         |
-| ForceFlush (SDK only required)                                                                   |x         |
+| Shutdown (SDK only required)                                                                     | N/A      |
+| ForceFlush (SDK only required)                                                                   | N/A      |
 | [Trace / Context interaction](specification/trace/api.md#context-interaction)                    |          |
 | Get active Span                                                                                  |+         |
 | Set active Span                                                                                  |+         |
 | [Tracer](specification/trace/api.md#tracer-operations)                                           | Optional |
-| Create a new Span                                                                                |          |
-| Documentation defines adding attributes at span creation as preferred                            |          |
-| Get active Span                                                                                  |          |
+| Create a new Span                                                                                |+         |
+| Documentation defines adding attributes at span creation as preferred                            |+         |
+| Get active Span                                                                                  |+         |
 | Mark Span active                                                                                 |          |
 | [SpanContext](specification/trace/api.md#spancontext)                                            |          |
 | IsValid                                                                                          | ?, can add as event or metadata |
@@ -25,14 +25,14 @@
 | Create root span                                                                                 | +        |
 | Create with default parent (active span)                                                         | +        |
 | Create with parent from Context                                                                  | +        |
-| No explicit parent Span/SpanContext allowed                                                      |          |
-| SpanProcessor.OnStart receives parent Context                                                    |          |
+| No explicit parent Span/SpanContext allowed                                                      | +        |
+| SpanProcessor.OnStart receives parent Context                                                    | -        |
 | UpdateName                                                                                       | -        |
-| User-defined start timestamp                                                                     |          |
-| End                                                                                              | +, when guard drops |
-| End with timestamp                                                                               | x        |
+| User-defined start timestamp                                                                     | -        |
+| End                                                                                              | +, when span closes(not exit) |
+| End with timestamp                                                                               | -        |
 | IsRecording                                                                                      | ?, can add attributes or metadata |
-| IsRecording becomes false after End                                                              | x        |
+| IsRecording becomes false after End                                                              | ?        |
 | Set status with StatusCode (Unset, Ok, Error)                                                    | ?, can add as event or metadata |
 | Safe for concurrent calls                                                                        | +        |
 | events collection size limit                                                                     | -        |
@@ -40,29 +40,29 @@
 | links collection size limit                                                                      | -        |
 | [Span attributes](specification/trace/api.md#set-attributes)                                     | Optional |
 | SetAttribute                                                                                     | +        |
-| Set order preserved                                                                              | X        |
+| Set order preserved                                                                              | -        |
 | String type                                                                                      | +        |
 | Boolean type                                                                                     | +        |
 | Double floating-point type                                                                       | +        |
 | Signed int64 type                                                                                | +        |
-| Array of primitives (homogeneous)                                                                |          |
+| Array of primitives (homogeneous)                                                                | +        |
 | `null` values documented as invalid/undefined                                                    |          |
-| Unicode support for keys and string values                                                       |          |
+| Unicode support for keys and string values                                                       | +        |
 | [Span linking](specification/trace/api.md#specifying-links)                                      | Optional |
-| Links can be recorded on span creation                                                           |          |
-| Links can be recorded after span creation                                                        |          |
-| Links order is preserved                                                                         |          |
+| Links can be recorded on span creation                                                           | ?, can add as metadata |
+| Links can be recorded after span creation                                                        | ?, can add as metadata         |
+| Links order is preserved                                                                         | -        |
 | [Span events](specification/trace/api.md#add-events)                                             |          |
 | AddEvent                                                                                         |+         |
-| Add order preserved                                                                              |+|
+| Add order preserved                                                                              |+         |
 | Safe for concurrent calls                                                                        |+         |
 | [Span exceptions](specification/trace/api.md#record-exception)                                   |          |
 | RecordException                                                                                  |          |
 | RecordException with extra parameters                                                            |          |
 | [Sampling](specification/trace/sdk.md#sampling)                                                  | Optional |
-| Allow samplers to modify tracestate                                                              |          |
-| ShouldSample gets full parent Context                                                            |          |
-| Sampler: JaegerRemoteSampler                                                                     |          |
+| Allow samplers to modify tracestate                                                              | N/A      |
+| ShouldSample gets full parent Context                                                            | N/A      |
+| Sampler: JaegerRemoteSampler                                                                     | N/A      |
 | [New Span ID created also for non-recording Spans](specification/trace/sdk.md#sdk-span-creation) |          |
 | [IdGenerators](specification/trace/sdk.md#id-generators)                                         |          |
 | [SpanLimits](specification/trace/sdk.md#span-limits)                                             | X        |
