@@ -9,14 +9,14 @@ COPY . /usr/src/opentelemetry-rust
 
 WORKDIR /usr/src/opentelemetry-rust/opentelemetry-otlp/tests/integration_test
 
-# Build the project. This step will compile your Rust project.
+# Build the project.
 RUN cargo build --release
 
 # Stage 2: Setup the runtime environment
 FROM debian:bullseye-slim
 
 # Copy the build artifact from the builder stage
-COPY --from=builder /usr/src/opentelemetry-rust/target/release/integration_test_runner /usr/local/bin/integration_test_runner
+COPY --from=builder /usr/src/opentelemetry-rust/target/release/integration_test_traces /usr/local/bin/integration_test_traces
 
 # Set the binary as the entrypoint of the container
-ENTRYPOINT ["integration_test_runner"]
+ENTRYPOINT ["integration_test_traces"]

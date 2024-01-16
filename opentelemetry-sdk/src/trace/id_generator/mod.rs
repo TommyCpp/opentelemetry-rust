@@ -55,6 +55,12 @@ mod increment {
     impl IncrementIdGenerator {
         /// Create a new [`IncrementIdGenerator`]
         pub fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    impl Default for IncrementIdGenerator {
+        fn default() -> Self {
             Self(Arc::new(AtomicU64::new(1)))
         }
     }
