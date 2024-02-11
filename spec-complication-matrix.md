@@ -20,7 +20,7 @@
 | [SpanContext](specification/trace/api.md#spancontext)                                            |          |
 | IsValid                                                                                          | ?, can add as event or metadata |
 | IsRemote                                                                                         | ?, can add as event or metadata |
-| Conforms to the W3C TraceContext spec                                                            | x        |
+| Conforms to the W3C TraceContext spec                                                            | -        |
 | [Span](specification/trace/api.md#span)                                                          | Optional |
 | Create root span                                                                                 | +        |
 | Create with default parent (active span)                                                         | +        |
@@ -65,7 +65,15 @@
 | Sampler: JaegerRemoteSampler                                                                     | N/A      |
 | [New Span ID created also for non-recording Spans](specification/trace/sdk.md#sdk-span-creation) |          |
 | [IdGenerators](specification/trace/sdk.md#id-generators)                                         | ?, not supported directly but can add [via subscribers](https://docs.rs/tracing/latest/tracing/trait.Subscriber.html#tymethod.new_span)         |
-| [SpanLimits](specification/trace/sdk.md#span-limits)                                             | X        |
+| [SpanLimits](specification/trace/sdk.md#span-limits)                                             | -        |
 | [Built-in `SpanProcessor`s implement `ForceFlush` spec](specification/trace/sdk.md#forceflush-1) | N/A      |
-| [Attribute Limits](specification/common/README.md#attribute-limits)                              | X        |
-| Fetch InstrumentationScope from ReadableSpan                                                     | X        |
+| [Attribute Limits](specification/common/README.md#attribute-limits)                              | -        |
+| Fetch InstrumentationScope from ReadableSpan                                                     | -        |
+
+
+
+
+
+* `-` means no support today
+* `?` means no support but pontential way to implement it
+* `+` means supported
