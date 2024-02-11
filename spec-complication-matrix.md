@@ -16,7 +16,7 @@
 | Create a new Span                                                                                |+         |
 | Documentation defines adding attributes at span creation as preferred                            |+         |
 | Get active Span                                                                                  |+         |
-| Mark Span active                                                                                 |          |
+| Mark Span active                                                                                 |+, same as tracing enter    |
 | [SpanContext](specification/trace/api.md#spancontext)                                            |          |
 | IsValid                                                                                          | ?, can add as event or metadata |
 | IsRemote                                                                                         | ?, can add as event or metadata |
@@ -46,7 +46,7 @@
 | Double floating-point type                                                                       | +        |
 | Signed int64 type                                                                                | +        |
 | Array of primitives (homogeneous)                                                                | +        |
-| `null` values documented as invalid/undefined                                                    |          |
+| `null` values documented as invalid/undefined                                                    | N/A      |
 | Unicode support for keys and string values                                                       | +        |
 | [Span linking](specification/trace/api.md#specifying-links)                                      | Optional |
 | Links can be recorded on span creation                                                           | ?, can add as metadata |
@@ -57,8 +57,8 @@
 | Add order preserved                                                                              |+         |
 | Safe for concurrent calls                                                                        |+         |
 | [Span exceptions](specification/trace/api.md#record-exception)                                   |          |
-| RecordException                                                                                  |          |
-| RecordException with extra parameters                                                            |          |
+| RecordException                                                                                  | ?, can add as events w/ special flags  |
+| RecordException with extra parameters                                                            | ?, can add as events w/ special flags, see [tracing-error](https://docs.rs/tracing-error/latest/tracing_error/)  |
 | [Sampling](specification/trace/sdk.md#sampling)                                                  | Optional |
 | Allow samplers to modify tracestate                                                              | N/A      |
 | ShouldSample gets full parent Context                                                            | N/A      |
@@ -66,6 +66,6 @@
 | [New Span ID created also for non-recording Spans](specification/trace/sdk.md#sdk-span-creation) |          |
 | [IdGenerators](specification/trace/sdk.md#id-generators)                                         | ?, not supported directly but can add [via subscribers](https://docs.rs/tracing/latest/tracing/trait.Subscriber.html#tymethod.new_span)         |
 | [SpanLimits](specification/trace/sdk.md#span-limits)                                             | X        |
-| [Built-in `SpanProcessor`s implement `ForceFlush` spec](specification/trace/sdk.md#forceflush-1) |          |
+| [Built-in `SpanProcessor`s implement `ForceFlush` spec](specification/trace/sdk.md#forceflush-1) | N/A      |
 | [Attribute Limits](specification/common/README.md#attribute-limits)                              | X        |
-| Fetch InstrumentationScope from ReadableSpan                                                     |          |
+| Fetch InstrumentationScope from ReadableSpan                                                     | X        |
