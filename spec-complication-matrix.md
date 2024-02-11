@@ -51,10 +51,10 @@
 | [Span linking](specification/trace/api.md#specifying-links)                                      | Optional |
 | Links can be recorded on span creation                                                           | ?, can add as metadata |
 | Links can be recorded after span creation                                                        | ?, can add as metadata         |
-| Links order is preserved                                                                         | -        |
+| Links order is preserved                                                                         | ?, depends on subscriber        |
 | [Span events](specification/trace/api.md#add-events)                                             |          |
 | AddEvent                                                                                         |+         |
-| Add order preserved                                                                              |+         |
+| Add order preserved                                                                              |?, depends on subscriber      |
 | Safe for concurrent calls                                                                        |+         |
 | [Span exceptions](specification/trace/api.md#record-exception)                                   |          |
 | RecordException                                                                                  | ?, can add as events w/ special flags  |
