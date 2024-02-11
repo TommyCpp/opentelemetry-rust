@@ -64,7 +64,7 @@
 | ShouldSample gets full parent Context                                                            | N/A      |
 | Sampler: JaegerRemoteSampler                                                                     | N/A      |
 | [New Span ID created also for non-recording Spans](specification/trace/sdk.md#sdk-span-creation) |          |
-| [IdGenerators](specification/trace/sdk.md#id-generators)                                         |          |
+| [IdGenerators](specification/trace/sdk.md#id-generators)                                         | ?, not supported directly but can add [via subscribers](https://docs.rs/tracing/latest/tracing/trait.Subscriber.html#tymethod.new_span)         |
 | [SpanLimits](specification/trace/sdk.md#span-limits)                                             | X        |
 | [Built-in `SpanProcessor`s implement `ForceFlush` spec](specification/trace/sdk.md#forceflush-1) |          |
 | [Attribute Limits](specification/common/README.md#attribute-limits)                              | X        |
