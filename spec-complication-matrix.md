@@ -1,6 +1,12 @@
+
+
+* `-` means no support today
+* `?` means no support but pontential way to implement it
+* `+` means supported
+ 
  Feature                                                                                          | Tokio Tracing |
 |--------------------------------------------------------------------------------------------------|----------|
-| [TracerProvider](specification/trace/api.md#tracerprovider-operations)                           |          |
+| [TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#tracerprovider-operations)                           |          |
 | Create TracerProvider                                                                            |-         |
 | Get a Tracer                                                                                     |-         |
 | Get a Tracer with schema_url                                                                     |-         |
@@ -9,19 +15,19 @@
 | Safe for concurrent calls                                                                        |+         |
 | Shutdown (SDK only required)                                                                     | N/A      |
 | ForceFlush (SDK only required)                                                                   | N/A      |
-| [Trace / Context interaction](specification/trace/api.md#context-interaction)                    |          |
+| [Trace / Context interaction](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#context-interaction)                    |          |
 | Get active Span                                                                                  |+         |
 | Set active Span                                                                                  |+         |
-| [Tracer](specification/trace/api.md#tracer-operations)                                           | Optional |
+| [Tracer](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#tracer-operations)                                           | Optional |
 | Create a new Span                                                                                |+         |
 | Documentation defines adding attributes at span creation as preferred                            |+         |
 | Get active Span                                                                                  |+         |
 | Mark Span active                                                                                 |+, same as tracing enter    |
-| [SpanContext](specification/trace/api.md#spancontext)                                            |          |
+| [SpanContext](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#spancontext)                                            |          |
 | IsValid                                                                                          | ?, can add as event or metadata |
 | IsRemote                                                                                         | ?, can add as event or metadata |
 | Conforms to the W3C TraceContext spec                                                            | -        |
-| [Span](specification/trace/api.md#span)                                                          | Optional |
+| [Span](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#span)                                                          | Optional |
 | Create root span                                                                                 | +        |
 | Create with default parent (active span)                                                         | +        |
 | Create with parent from Context                                                                  | +        |
@@ -38,7 +44,7 @@
 | events collection size limit                                                                     | -        |
 | attribute collection size limit                                                                  | -        |
 | links collection size limit                                                                      | -        |
-| [Span attributes](specification/trace/api.md#set-attributes)                                     | Optional |
+| [Span attributes](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#set-attributes)                                     | Optional |
 | SetAttribute                                                                                     | +        |
 | Set order preserved                                                                              | -        |
 | String type                                                                                      | +        |
@@ -48,32 +54,24 @@
 | Array of primitives (homogeneous)                                                                | +        |
 | `null` values documented as invalid/undefined                                                    | N/A      |
 | Unicode support for keys and string values                                                       | +        |
-| [Span linking](specification/trace/api.md#specifying-links)                                      | Optional |
+| [Span linking](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#specifying-links)                                      | Optional |
 | Links can be recorded on span creation                                                           | ?, can add as metadata |
 | Links can be recorded after span creation                                                        | ?, can add as metadata         |
 | Links order is preserved                                                                         | ?, depends on subscriber        |
-| [Span events](specification/trace/api.md#add-events)                                             |          |
+| [Span events](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#add-events)                                             |          |
 | AddEvent                                                                                         |+         |
 | Add order preserved                                                                              |?, depends on subscriber      |
 | Safe for concurrent calls                                                                        |+         |
-| [Span exceptions](specification/trace/api.md#record-exception)                                   |          |
+| [Span exceptions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/api.md#record-exception)                                   |          |
 | RecordException                                                                                  | ?, can add as events w/ special flags  |
 | RecordException with extra parameters                                                            | ?, can add as events w/ special flags, see [tracing-error](https://docs.rs/tracing-error/latest/tracing_error/)  |
-| [Sampling](specification/trace/sdk.md#sampling)                                                  | Optional |
+| [Sampling](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/sdk.md#sampling)                                                  | Optional |
 | Allow samplers to modify tracestate                                                              | N/A      |
 | ShouldSample gets full parent Context                                                            | N/A      |
 | Sampler: JaegerRemoteSampler                                                                     | N/A      |
-| [New Span ID created also for non-recording Spans](specification/trace/sdk.md#sdk-span-creation) |          |
-| [IdGenerators](specification/trace/sdk.md#id-generators)                                         | ?, not supported directly but can add [via subscribers](https://docs.rs/tracing/latest/tracing/trait.Subscriber.html#tymethod.new_span)         |
-| [SpanLimits](specification/trace/sdk.md#span-limits)                                             | -        |
-| [Built-in `SpanProcessor`s implement `ForceFlush` spec](specification/trace/sdk.md#forceflush-1) | N/A      |
-| [Attribute Limits](specification/common/README.md#attribute-limits)                              | -        |
+| [New Span ID created also for non-recording Spans](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/sdk.md#sdk-span-creation) |          |
+| [IdGenerators](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/sdk.md#id-generators)                                         | ?, not supported directly but can add [via subscribers](https://docs.rs/tracing/latest/tracing/trait.Subscriber.html#tymethod.new_span)         |
+| [SpanLimits](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/sdk.md#span-limits)                                             | -        |
+| [Built-in `SpanProcessor`s implement `ForceFlush` spec](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/sdk.md#forceflush-1) | N/A      |
+| [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common/README.md#attribute-limits)                              | -        |
 | Fetch InstrumentationScope from ReadableSpan                                                     | -        |
-
-
-
-
-
-* `-` means no support today
-* `?` means no support but pontential way to implement it
-* `+` means supported
