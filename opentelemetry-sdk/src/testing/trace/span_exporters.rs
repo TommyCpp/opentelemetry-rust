@@ -163,6 +163,7 @@ impl NoopSpanExporter {
 #[async_trait::async_trait]
 impl SpanExporter for NoopSpanExporter {
     fn export(&mut self, _: Vec<SpanData>) -> BoxFuture<'static, ExportResult> {
+        println!("exporting one span");
         Box::pin(std::future::ready(Ok(())))
     }
 }

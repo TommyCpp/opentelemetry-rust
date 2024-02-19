@@ -41,6 +41,8 @@ pub trait Runtime: Clone + Send + Sync + 'static {
 
     /// Return a new future, which resolves after the specified [std::time::Duration].
     fn delay(&self, duration: Duration) -> Self::Delay;
+
+    fn spawn_blocking(&self, future: BoxFuture<'static, ()>);
 }
 
 /// Runtime implementation, which works with Tokio's multi thread runtime.
@@ -67,6 +69,12 @@ impl Runtime for Tokio {
 
     fn delay(&self, duration: Duration) -> Self::Delay {
         Box::pin(tokio::time::sleep(duration))
+    }
+
+    fn spawn_blocking(&self, future: BoxFuture<'static, ()>) {
+        let _ = tokio::task::spawn_blocking(|| {
+            futures_executor::block_on(future);
+        });
     }
 }
 
@@ -105,6 +113,10 @@ impl Runtime for TokioCurrentThread {
     fn delay(&self, duration: Duration) -> Self::Delay {
         Box::pin(tokio::time::sleep(duration))
     }
+
+    fn spawn_blocking(&self, future: BoxFuture<'static, ()>) {
+        todo!()
+    }
 }
 
 /// Runtime implementation, which works with async-std.
@@ -130,6 +142,10 @@ impl Runtime for AsyncStd {
 
     fn delay(&self, duration: Duration) -> Self::Delay {
         Box::pin(async_std::task::sleep(duration))
+    }
+
+    fn spawn_blocking(&self, future: BoxFuture<'static, ()>) {
+        todo!()
     }
 }
 

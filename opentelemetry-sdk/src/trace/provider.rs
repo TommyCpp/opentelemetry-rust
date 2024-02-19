@@ -114,6 +114,16 @@ impl TracerProvider {
             .map(|processor| processor.force_flush())
             .collect()
     }
+
+    pub fn force_push_async(&self) -> tokio::task::JoinHandle<Vec<TraceResult<()>>> {
+        let inner = self.inner.clone();
+        tokio::task::spawn_blocking(move || {
+            inner.processors
+                .iter()
+                .map(|processor| processor.force_flush())
+                .collect()
+        })
+    }
 }
 
 impl opentelemetry::trace::TracerProvider for TracerProvider {

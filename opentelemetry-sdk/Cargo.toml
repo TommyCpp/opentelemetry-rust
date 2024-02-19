@@ -30,6 +30,7 @@ url = { workspace = true, optional = true }
 tokio = { workspace = true, features = ["rt", "time"], optional = true }
 tokio-stream = { workspace = true, optional = true }
 http = { workspace = true, optional = true }
+tokio-util = "0.7.10"
 
 [package.metadata.docs.rs]
 all-features = true

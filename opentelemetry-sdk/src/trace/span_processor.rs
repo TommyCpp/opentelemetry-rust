@@ -51,6 +51,7 @@ use opentelemetry::{
 };
 use std::cmp::min;
 use std::{env, fmt, str::FromStr, thread, time::Duration};
+use std::pin::Pin;
 
 /// Delay interval between two consecutive exports.
 const OTEL_BSP_SCHEDULE_DELAY: &str = "OTEL_BSP_SCHEDULE_DELAY";
@@ -256,7 +257,6 @@ enum Message {
 /// [`async-std`]: https://async.rs
 pub struct BatchSpanProcessor<R: RuntimeChannel> {
     message_sender: R::Sender<BatchMessage>,
-    handler: thread::JoinHandle<()>
 }
 
 impl<R: RuntimeChannel> fmt::Debug for BatchSpanProcessor<R> {
@@ -366,6 +366,7 @@ impl<R: RuntimeChannel> BatchSpanProcessorInternal<R> {
         match message {
             // Span has finished, add to buffer of pending spans.
             BatchMessage::ExportSpan(span) => {
+                println!("span finished");
                 self.spans.push(span);
 
                 if self.spans.len() == self.config.max_export_batch_size {
@@ -487,24 +488,13 @@ impl<R: RuntimeChannel> BatchSpanProcessor<R> {
         };
 
         // Spawn worker process via user-defined spawn function.
-        let handler = thread::spawn(move || {
-            // Create a new Runtime to run tasks
-            let runtime = tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .thread_name("dedicate")
-                .worker_threads(1)
-                .build()
-                .expect("Creating Tokio runtime");
+        runtime.spawn(Box::pin(processor.run(messages)));
+        // let _ = runtime.spawn_blocking(Box::pin(processor.run(messages)));
 
-            // Pull task requests off the channel and send them to the executor
-            runtime.block_on(async move {
-                processor.run(messages).await;
-            });
-
-        });
-
-                // Return batch processor with link to worker
-        BatchSpanProcessor { message_sender, handler }
+        // Return batch processor with link to worker
+        BatchSpanProcessor {
+            message_sender,
+        }
     }
 
     /// Create a new batch processor builder
