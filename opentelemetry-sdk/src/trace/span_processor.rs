@@ -256,6 +256,7 @@ enum Message {
 /// [`async-std`]: https://async.rs
 pub struct BatchSpanProcessor<R: RuntimeChannel> {
     message_sender: R::Sender<BatchMessage>,
+    handler: thread::JoinHandle<()>
 }
 
 impl<R: RuntimeChannel> fmt::Debug for BatchSpanProcessor<R> {
@@ -486,10 +487,24 @@ impl<R: RuntimeChannel> BatchSpanProcessor<R> {
         };
 
         // Spawn worker process via user-defined spawn function.
-        runtime.spawn(Box::pin(processor.run(messages)));
+        let handler = thread::spawn(move || {
+            // Create a new Runtime to run tasks
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .thread_name("dedicate")
+                .worker_threads(1)
+                .build()
+                .expect("Creating Tokio runtime");
 
-        // Return batch processor with link to worker
-        BatchSpanProcessor { message_sender }
+            // Pull task requests off the channel and send them to the executor
+            runtime.block_on(async move {
+                processor.run(messages).await;
+            });
+
+        });
+
+                // Return batch processor with link to worker
+        BatchSpanProcessor { message_sender, handler }
     }
 
     /// Create a new batch processor builder

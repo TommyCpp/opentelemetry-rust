@@ -24,6 +24,8 @@ members = [
     "examples/tracing-grpc",
     "examples/tracing-http-propagator",
     "examples/tracing-jaeger",
+    "examples/hang-debug",
+    "examples/tokio-fun",
     "stress",
 ]
 resolver = "2"

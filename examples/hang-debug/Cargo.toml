@@ -1,0 +1,12 @@
+[package]
+name = "otel-hang"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+opentelemetry = { path = "../../opentelemetry", default-features = false, features = ["trace"] }
+opentelemetry_sdk = { path = "../../opentelemetry-sdk", default-features = false, features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { path = "../../opentelemetry-otlp", default-features = false, features = ["grpc-tonic", "trace"] }
+tokio = { version = "1", features = ["full"] }
