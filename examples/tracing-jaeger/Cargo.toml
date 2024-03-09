@@ -6,7 +6,12 @@ license = "Apache-2.0"
 publish = false
 
 [dependencies]
-opentelemetry = { path = "../../opentelemetry" }
-opentelemetry_sdk = { path = "../../opentelemetry-sdk", features = ["rt-tokio"] }
-opentelemetry-otlp = { path = "../../opentelemetry-otlp", features = ["tonic"] }
-tokio = { workspace = true, features = ["full"] }
+tracing = { version = "0.1.40", features = ["log", "attributes"] }
+tracing-subscriber = { version = "0.3.18", features = ["std", "env-filter", "json"] }
+opentelemetry = { version = "0.22.0" }
+opentelemetry_sdk = { version = "0.22.0", features = ["rt-tokio"] }
+opentelemetry-aws = "0.10.0"
+opentelemetry-otlp = { version = "0.15.0", features = ["grpc-tonic", "tls"] }
+opentelemetry-stdout = { version = "0.3.0" , features = ["trace"] }
+tracing-opentelemetry = "0.23.0"
+tokio = { version = "1.36.0", features = ["full"] }
