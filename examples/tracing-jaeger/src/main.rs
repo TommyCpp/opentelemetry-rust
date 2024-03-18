@@ -1,35 +1,20 @@
 use opentelemetry::global::shutdown_tracer_provider;
+use opentelemetry::trace::TracerProvider;
 use opentelemetry::{
     global,
-    trace::{TraceContextExt, TraceError, Tracer},
+    trace::{TraceContextExt, Tracer},
     KeyValue,
 };
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::{runtime, trace as sdktrace, Resource};
 use std::error::Error;
-
-fn init_tracer() -> Result<opentelemetry_sdk::trace::Tracer, TraceError> {
-    opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(
-            opentelemetry_otlp::new_exporter()
-                .tonic()
-                .with_endpoint("http://localhost:4317"),
-        )
-        .with_trace_config(
-            sdktrace::config().with_resource(Resource::new(vec![KeyValue::new(
-                "service.name",
-                "tracing-jaeger",
-            )])),
-        )
-        .install_batch(runtime::Tokio)
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    let _tracer = init_tracer().expect("Failed to initialize tracer.");
+    let provider = opentelemetry_sdk::trace::TracerProvider::builder()
+        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+        .build();
 
-    let tracer = global::tracer("tracing-jaeger");
+    let tracer = provider.tracer("tracing-jaeger");
+
     tracer.in_span("main-operation", |cx| {
         let span = cx.span();
         span.set_attribute(KeyValue::new("my-attribute", "my-value"));
@@ -43,6 +28,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         });
     });
 
-    shutdown_tracer_provider();
+    let _ = tracer.start("Test");
     Ok(())
 }

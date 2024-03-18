@@ -145,7 +145,7 @@ impl opentelemetry::trace::TracerProvider for TracerProvider {
     }
 
     fn library_tracer(&self, library: Arc<InstrumentationLibrary>) -> Self::Tracer {
-        Tracer::new(library, Arc::downgrade(&self.inner))
+        Tracer::new(library, self.clone())
     }
 }
 

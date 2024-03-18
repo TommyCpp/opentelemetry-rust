@@ -77,7 +77,7 @@ impl Span {
     /// overhead.
     pub fn exported_data(&self) -> Option<crate::export::trace::SpanData> {
         let (span_context, tracer) = (self.span_context.clone(), &self.tracer);
-        let resource = self.tracer.provider()?.config().resource.clone();
+        let resource = self.tracer.provider().config().resource.clone();
 
         self.data
             .as_ref()
@@ -184,11 +184,7 @@ impl Span {
             None => return,
         };
 
-        // skip if provider has been shut down
-        let provider = match self.tracer.provider() {
-            Some(provider) => provider,
-            None => return,
-        };
+        let provider = self.tracer.provider();
 
         // ensure end time is set via explicit end or implicitly on drop
         if let Some(timestamp) = timestamp {
