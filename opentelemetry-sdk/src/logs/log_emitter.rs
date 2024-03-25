@@ -13,6 +13,9 @@ use opentelemetry::{
 #[cfg(feature = "logs_level_enabled")]
 use opentelemetry::logs::Severity;
 
+use std::sync::atomic::AtomicBool;
+use std::sync::RwLock;
+use std::sync::Weak;
 use std::{borrow::Cow, sync::Arc};
 
 #[derive(Debug, Clone)]
@@ -34,7 +37,7 @@ impl opentelemetry::logs::LoggerProvider for LoggerProvider {
         version: Option<Cow<'static, str>>,
         schema_url: Option<Cow<'static, str>>,
         attributes: Option<Vec<opentelemetry::KeyValue>>,
-    ) -> Logger {
+    ) -> Arc<Logger> {
         let name = name.into();
 
         let component_name = if name.is_empty() {
@@ -51,8 +54,15 @@ impl opentelemetry::logs::LoggerProvider for LoggerProvider {
         )))
     }
 
-    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Self::Logger {
-        Logger::new(library, self.clone())
+    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Arc<Self::Logger> {
+        let logger: Arc<dyn opentelemetry::logs::Logger + Send + Sync> =
+            Arc::new(Logger::new(library, self.clone()));
+        let _ = self
+            .loggers
+            .write()
+            .map(|mut loggers| loggers.push(Arc::downgrade(&logger)));
+        // todo: handle poisoned lock
+        logger
     }
 }
 
@@ -89,13 +99,20 @@ impl LoggerProvider {
     /// Attempts to shutdown this `LoggerProvider`, succeeding only when
     /// all cloned `LoggerProvider` values have been dropped.
     pub fn try_shutdown(&mut self) -> Option<Vec<LogResult<()>>> {
-        Arc::get_mut(&mut self.inner).map(|inner| {
-            inner
+        let _ = self.inner.loggers.read().map(|loggers| {
+            for logger in loggers.iter() {
+                if let Some(logger) = logger.upgrade() {
+                    logger.shutdown();
+                }
+            }
+        }); // todo: handle errors
+        Some(
+            self.inner
                 .processors
-                .iter_mut()
+                .iter()
                 .map(|processor| processor.shutdown())
-                .collect()
-        })
+                .collect(),
+        )
     }
 }
 
@@ -103,6 +120,7 @@ impl LoggerProvider {
 struct LoggerProviderInner {
     processors: Vec<Box<dyn LogProcessor>>,
     config: Config,
+    loggers: RwLock<Vec<Weak<dyn opentelemetry::logs::Logger + Send + Sync>>>,
 }
 
 impl Drop for LoggerProviderInner {
@@ -160,6 +178,7 @@ impl Builder {
             inner: Arc::new(LoggerProviderInner {
                 processors: self.processors,
                 config: self.config,
+                loggers: RwLock::new(Vec::new()),
             }),
         }
     }
@@ -172,6 +191,7 @@ impl Builder {
 pub struct Logger {
     instrumentation_lib: Arc<InstrumentationLibrary>,
     provider: LoggerProvider,
+    is_shutdown: AtomicBool,
 }
 
 impl Logger {
@@ -182,6 +202,7 @@ impl Logger {
         Logger {
             instrumentation_lib,
             provider,
+            is_shutdown: AtomicBool::new(false),
         }
     }
 
@@ -234,6 +255,11 @@ impl opentelemetry::logs::Logger for Logger {
                 );
         }
         enabled
+    }
+
+    fn shutdown(&self) {
+        self.is_shutdown
+            .store(true, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
@@ -354,7 +380,7 @@ mod tests {
             Ok(())
         }
 
-        fn shutdown(&mut self) -> LogResult<()> {
+        fn shutdown(&self) -> LogResult<()> {
             *self.shutdown_called.lock().unwrap() = true;
             Ok(())
         }

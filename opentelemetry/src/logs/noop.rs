@@ -19,18 +19,18 @@ impl NoopLoggerProvider {
 impl LoggerProvider for NoopLoggerProvider {
     type Logger = NoopLogger;
 
-    fn library_logger(&self, _library: Arc<InstrumentationLibrary>) -> Self::Logger {
-        NoopLogger(())
-    }
-
     fn versioned_logger(
         &self,
         _name: impl Into<Cow<'static, str>>,
         _version: Option<Cow<'static, str>>,
         _schema_url: Option<Cow<'static, str>>,
         _attributes: Option<Vec<KeyValue>>,
-    ) -> Self::Logger {
-        NoopLogger(())
+    ) -> Arc<NoopLogger> {
+        Arc::from(NoopLogger(()))
+    }
+
+    fn library_logger(&self, _library: Arc<InstrumentationLibrary>) -> Arc<Self::Logger> {
+        Arc::from(NoopLogger(()))
     }
 }
 
@@ -44,4 +44,6 @@ impl Logger for NoopLogger {
     fn event_enabled(&self, _level: super::Severity, _target: &str) -> bool {
         false
     }
+
+    fn shutdown(&self) {}
 }

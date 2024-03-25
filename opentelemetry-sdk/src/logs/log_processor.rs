@@ -46,7 +46,7 @@ pub trait LogProcessor: Send + Sync + Debug {
     /// Force the logs lying in the cache to be exported.
     fn force_flush(&self) -> LogResult<()>;
     /// Shuts down the processor.
-    fn shutdown(&mut self) -> LogResult<()>;
+    fn shutdown(&self) -> LogResult<()>;
     #[cfg(feature = "logs_level_enabled")]
     /// Check if logging is enabled
     fn event_enabled(&self, level: Severity, target: &str, name: &str) -> bool;
@@ -85,7 +85,7 @@ impl LogProcessor for SimpleLogProcessor {
         Ok(())
     }
 
-    fn shutdown(&mut self) -> LogResult<()> {
+    fn shutdown(&self) -> LogResult<()> {
         if let Ok(mut exporter) = self.exporter.lock() {
             exporter.shutdown();
             Ok(())
@@ -141,7 +141,7 @@ impl<R: RuntimeChannel> LogProcessor for BatchLogProcessor<R> {
             .and_then(std::convert::identity)
     }
 
-    fn shutdown(&mut self) -> LogResult<()> {
+    fn shutdown(&self) -> LogResult<()> {
         let (res_sender, res_receiver) = oneshot::channel();
         self.message_sender
             .try_send(BatchMessage::Shutdown(res_sender))

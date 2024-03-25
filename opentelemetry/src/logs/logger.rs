@@ -18,6 +18,9 @@ pub trait Logger {
     #[cfg(feature = "logs_level_enabled")]
     /// Check if the given log level is enabled.
     fn event_enabled(&self, level: Severity, target: &str) -> bool;
+
+    /// Notify the logger that the logger provider has already been shut down.
+    fn shutdown(&self);
 }
 
 /// Interfaces that can create [`Logger`] instances.
@@ -36,7 +39,7 @@ pub trait LoggerProvider {
         version: Option<Cow<'static, str>>,
         schema_url: Option<Cow<'static, str>>,
         attributes: Option<Vec<KeyValue>>,
-    ) -> Self::Logger {
+    ) -> Arc<Self::Logger> {
         self.library_logger(Arc::new(InstrumentationLibrary::new(
             name, version, schema_url, attributes,
         )))
@@ -62,14 +65,14 @@ pub trait LoggerProvider {
     /// ));
     /// let logger = provider.library_logger(library);
     /// ```
-    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Self::Logger;
+    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Arc<Self::Logger>;
 
     /// Returns a new logger with the given name.
     ///
     /// The `name` should be the application name or the name of the library
     /// providing instrumentation. If the name is empty, then an
     /// implementation-defined default name may be used instead.
-    fn logger(&self, name: impl Into<Cow<'static, str>>) -> Self::Logger {
+    fn logger(&self, name: impl Into<Cow<'static, str>>) -> Arc<Self::Logger> {
         self.versioned_logger(name, None, None, None)
     }
 }

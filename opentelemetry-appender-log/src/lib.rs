@@ -1,13 +1,14 @@
 use log::{Level, Metadata, Record};
 use opentelemetry::logs::{AnyValue, LogRecordBuilder, Logger, LoggerProvider, Severity};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct OpenTelemetryLogBridge<P, L>
 where
     P: LoggerProvider<Logger = L> + Send + Sync,
     L: Logger + Send + Sync,
 {
-    logger: L,
+    logger: Arc<L>,
     _phantom: std::marker::PhantomData<P>, // P is not used in this struct
 }
 

@@ -3,6 +3,7 @@ use opentelemetry::{
     Key,
 };
 use std::borrow::Cow;
+use std::sync::Arc;
 use tracing_core::{Level, Metadata};
 #[cfg(feature = "experimental_metadata_attributes")]
 use tracing_log::NormalizeEvent;
@@ -127,7 +128,7 @@ where
     P: LoggerProvider<Logger = L> + Send + Sync,
     L: Logger + Send + Sync,
 {
-    logger: L,
+    logger: Arc<L>,
     _phantom: std::marker::PhantomData<P>, // P is not used.
 }
 

@@ -24,7 +24,7 @@ pub trait ObjectSafeLoggerProvider {
     fn boxed_logger(
         &self,
         library: Arc<InstrumentationLibrary>,
-    ) -> Box<dyn Logger + Send + Sync + 'static>;
+    ) -> Arc<dyn Logger + Send + Sync + 'static>;
 }
 
 impl<L, P> ObjectSafeLoggerProvider for P
@@ -35,12 +35,12 @@ where
     fn boxed_logger(
         &self,
         library: Arc<InstrumentationLibrary>,
-    ) -> Box<dyn Logger + Send + Sync + 'static> {
-        Box::new(self.library_logger(library))
+    ) -> Arc<dyn Logger + Send + Sync + 'static> {
+        self.library_logger(library)
     }
 }
 
-pub struct BoxedLogger(Box<dyn Logger + Send + Sync + 'static>);
+pub struct BoxedLogger(Arc<dyn Logger + Send + Sync + 'static>);
 
 impl fmt::Debug for BoxedLogger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -56,6 +56,10 @@ impl Logger for BoxedLogger {
     #[cfg(feature = "logs_level_enabled")]
     fn event_enabled(&self, level: crate::logs::Severity, target: &str) -> bool {
         self.0.event_enabled(level, target)
+    }
+
+    fn shutdown(&self) {
+        self.0.shutdown()
     }
 }
 
@@ -87,8 +91,8 @@ impl GlobalLoggerProvider {
 impl LoggerProvider for GlobalLoggerProvider {
     type Logger = BoxedLogger;
 
-    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Self::Logger {
-        BoxedLogger(self.provider.boxed_logger(library))
+    fn library_logger(&self, library: Arc<InstrumentationLibrary>) -> Arc<Self::Logger> {
+        Arc::new(BoxedLogger(self.provider.boxed_logger(library)))
     }
 }
 
@@ -112,7 +116,7 @@ pub fn logger_provider() -> GlobalLoggerProvider {
 /// If `name` is an empty string, the provider will use a default name.
 ///
 /// [`Logger`]: crate::logs::Logger
-pub fn logger(name: impl Into<Cow<'static, str>>) -> BoxedLogger {
+pub fn logger(name: impl Into<Cow<'static, str>>) -> Arc<BoxedLogger> {
     logger_provider().logger(name)
 }
 
