@@ -229,21 +229,23 @@ pub use crate::exporter::ExportConfig;
 pub use crate::span::{
     OtlpTracePipeline, SpanExporter, SpanExporterBuilder, OTEL_EXPORTER_OTLP_TRACES_COMPRESSION,
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, OTEL_EXPORTER_OTLP_TRACES_HEADERS,
-    OTEL_EXPORTER_OTLP_TRACES_TIMEOUT,
+    OTEL_EXPORTER_OTLP_TRACES_PROTOCOL, OTEL_EXPORTER_OTLP_TRACES_TIMEOUT,
 };
+use std::str::FromStr;
 
 #[cfg(feature = "metrics")]
 pub use crate::metric::{
     MetricsExporter, MetricsExporterBuilder, OtlpMetricPipeline,
     OTEL_EXPORTER_OTLP_METRICS_COMPRESSION, OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
-    OTEL_EXPORTER_OTLP_METRICS_HEADERS, OTEL_EXPORTER_OTLP_METRICS_TIMEOUT,
+    OTEL_EXPORTER_OTLP_METRICS_HEADERS, OTEL_EXPORTER_OTLP_METRICS_PROTOCOL,
+    OTEL_EXPORTER_OTLP_METRICS_TIMEOUT,
 };
 
 #[cfg(feature = "logs")]
 pub use crate::logs::{
     LogExporter, LogExporterBuilder, OtlpLogPipeline, OTEL_EXPORTER_OTLP_LOGS_COMPRESSION,
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, OTEL_EXPORTER_OTLP_LOGS_HEADERS,
-    OTEL_EXPORTER_OTLP_LOGS_TIMEOUT,
+    OTEL_EXPORTER_OTLP_LOGS_PROTOCOL, OTEL_EXPORTER_OTLP_LOGS_TIMEOUT,
 };
 
 pub use crate::exporter::{
@@ -421,6 +423,19 @@ pub enum Protocol {
     HttpBinary,
     /// HTTP protocol with JSON payload
     HttpJson,
+}
+
+impl FromStr for Protocol {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "grpc" => Ok(Protocol::Grpc),
+            "http-binary" => Ok(Protocol::HttpBinary),
+            "json" => Ok(Protocol::HttpJson),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(Debug, Default)]

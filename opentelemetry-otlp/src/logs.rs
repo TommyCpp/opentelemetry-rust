@@ -32,6 +32,13 @@ pub const OTEL_EXPORTER_OTLP_LOGS_TIMEOUT: &str = "OTEL_EXPORTER_OTLP_LOGS_TIMEO
 /// Note: this is only supported for HTTP.
 pub const OTEL_EXPORTER_OTLP_LOGS_HEADERS: &str = "OTEL_EXPORTER_OTLP_LOGS_HEADERS";
 
+/// The transport protocol. Options MUST be one of: `grpc`, `http/protobuf`, `http/json`.
+/// By default `http/protobuf`
+/// See
+/// [Specify Protocol](https://github.com/open-telemetry/opentelemetry-specification/blob/0e78770920864a734d0f15ad1456963db0e439e9/specification/protocol/exporter.md#specify-protocol)
+/// for more details.
+pub const OTEL_EXPORTER_OTLP_LOGS_PROTOCOL: &str = "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL";
+
 impl OtlpPipeline {
     /// Create a OTLP logging pipeline.
     pub fn logging(self) -> OtlpLogPipeline<NoExporterConfig> {

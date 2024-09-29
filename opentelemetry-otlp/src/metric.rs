@@ -39,6 +39,14 @@ pub const OTEL_EXPORTER_OTLP_METRICS_COMPRESSION: &str = "OTEL_EXPORTER_OTLP_MET
 /// Example: `k1=v1,k2=v2`
 /// Note: this is only supported for HTTP.
 pub const OTEL_EXPORTER_OTLP_METRICS_HEADERS: &str = "OTEL_EXPORTER_OTLP_METRICS_HEADERS";
+
+/// The transport protocol. Options MUST be one of: `grpc`, `http/protobuf`, `http/json`.
+/// By default `http/protobuf`
+/// See
+/// [Specify Protocol](https://github.com/open-telemetry/opentelemetry-specification/blob/0e78770920864a734d0f15ad1456963db0e439e9/specification/protocol/exporter.md#specify-protocol)
+/// for more details.
+pub const OTEL_EXPORTER_OTLP_METRICS_PROTOCOL: &str = "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL";
+
 impl OtlpPipeline {
     /// Create a OTLP metrics pipeline.
     pub fn metrics<RT>(self, rt: RT) -> OtlpMetricPipeline<RT, NoExporterConfig>

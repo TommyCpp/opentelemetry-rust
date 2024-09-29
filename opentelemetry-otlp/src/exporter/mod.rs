@@ -186,8 +186,6 @@ pub trait WithExportConfig {
     /// Note that protocols that are not supported by exporters will be ignore. The exporter
     /// will use default protocol in this case.
     ///
-    /// ## Note
-    /// All exporters in this crate are only support one protocol thus choosing the protocol is an no-op at the moment
     fn with_protocol(self, protocol: Protocol) -> Self;
     /// Set the timeout to the collector.
     fn with_timeout(self, timeout: Duration) -> Self;

@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     ExportConfig, Protocol, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS,
-    OTEL_EXPORTER_OTLP_TIMEOUT,
+    OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_TIMEOUT,
 };
 use http::{HeaderName, HeaderValue, Uri};
 use opentelemetry_http::HttpClient;
@@ -154,6 +154,7 @@ impl HttpExporterBuilder {
         signal_endpoint_path: &str,
         signal_timeout_var: &str,
         signal_http_headers_var: &str,
+        signal_protocol: &str,
     ) -> Result<OtlpHttpClient, crate::Error> {
         let endpoint = resolve_http_endpoint(
             signal_endpoint_var,
@@ -170,6 +171,14 @@ impl HttpExporterBuilder {
                 Err(_) => self.exporter_config.timeout,
             },
             None => self.exporter_config.timeout,
+        };
+
+        let protocol = match env::var(signal_protocol)
+            .ok()
+            .or(env::var(OTEL_EXPORTER_OTLP_PROTOCOL).ok())
+        {
+            Some(val) => Protocol::from_str(&val).unwrap_or(self.exporter_config.protocol),
+            None => self.exporter_config.protocol,
         };
 
         let http_client = self
@@ -204,7 +213,7 @@ impl HttpExporterBuilder {
             http_client,
             endpoint,
             headers,
-            self.exporter_config.protocol,
+            protocol,
             timeout,
         ))
     }
@@ -216,7 +225,7 @@ impl HttpExporterBuilder {
     ) -> Result<crate::SpanExporter, opentelemetry::trace::TraceError> {
         use crate::{
             OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, OTEL_EXPORTER_OTLP_TRACES_HEADERS,
-            OTEL_EXPORTER_OTLP_TRACES_TIMEOUT,
+            OTEL_EXPORTER_OTLP_TRACES_PROTOCOL, OTEL_EXPORTER_OTLP_TRACES_TIMEOUT,
         };
 
         let client = self.build_client(
@@ -224,6 +233,7 @@ impl HttpExporterBuilder {
             "/v1/traces",
             OTEL_EXPORTER_OTLP_TRACES_TIMEOUT,
             OTEL_EXPORTER_OTLP_TRACES_HEADERS,
+            OTEL_EXPORTER_OTLP_TRACES_PROTOCOL,
         )?;
 
         Ok(crate::SpanExporter::new(client))
@@ -234,7 +244,7 @@ impl HttpExporterBuilder {
     pub fn build_log_exporter(mut self) -> opentelemetry::logs::LogResult<crate::LogExporter> {
         use crate::{
             OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, OTEL_EXPORTER_OTLP_LOGS_HEADERS,
-            OTEL_EXPORTER_OTLP_LOGS_TIMEOUT,
+            OTEL_EXPORTER_OTLP_LOGS_PROTOCOL, OTEL_EXPORTER_OTLP_LOGS_TIMEOUT,
         };
 
         let client = self.build_client(
@@ -242,6 +252,7 @@ impl HttpExporterBuilder {
             "/v1/logs",
             OTEL_EXPORTER_OTLP_LOGS_TIMEOUT,
             OTEL_EXPORTER_OTLP_LOGS_HEADERS,
+            OTEL_EXPORTER_OTLP_LOGS_PROTOCOL,
         )?;
 
         Ok(crate::LogExporter::new(client))
@@ -255,7 +266,7 @@ impl HttpExporterBuilder {
     ) -> opentelemetry::metrics::Result<crate::MetricsExporter> {
         use crate::{
             OTEL_EXPORTER_OTLP_METRICS_ENDPOINT, OTEL_EXPORTER_OTLP_METRICS_HEADERS,
-            OTEL_EXPORTER_OTLP_METRICS_TIMEOUT,
+            OTEL_EXPORTER_OTLP_METRICS_PROTOCOL, OTEL_EXPORTER_OTLP_METRICS_TIMEOUT,
         };
 
         let client = self.build_client(
@@ -263,6 +274,7 @@ impl HttpExporterBuilder {
             "/v1/metrics",
             OTEL_EXPORTER_OTLP_METRICS_TIMEOUT,
             OTEL_EXPORTER_OTLP_METRICS_HEADERS,
+            OTEL_EXPORTER_OTLP_METRICS_PROTOCOL,
         )?;
 
         Ok(crate::MetricsExporter::new(client, temporality_selector))
@@ -620,6 +632,39 @@ mod tests {
 
     #[test]
     fn test_http_exporter_endpoint() {
+        // default endpoint should add signal path
+        run_env_test(vec![], || {
+            let exporter = new_exporter().http();
+
+            let url = resolve_http_endpoint(
+                OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
+                "/v1/traces",
+                exporter.exporter_config.endpoint.as_str(),
+            )
+            .unwrap();
+
+            assert_eq!(url, "http://localhost:4318/v1/traces");
+        });
+
+        // if builder endpoint is set, it should not add signal path
+        run_env_test(vec![], || {
+            let exporter = new_exporter()
+                .http()
+                .with_endpoint("http://localhost:4318/v1/tracesbutnotreally");
+
+            let url = resolve_http_endpoint(
+                OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
+                "/v1/traces",
+                exporter.exporter_config.endpoint.as_str(),
+            )
+            .unwrap();
+
+            assert_eq!(url, "http://localhost:4318/v1/tracesbutnotreally");
+        });
+    }
+
+    #[test]
+    fn test_http_exporter_protocol() {
         // default endpoint should add signal path
         run_env_test(vec![], || {
             let exporter = new_exporter().http();

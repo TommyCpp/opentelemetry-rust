@@ -28,6 +28,13 @@ pub const OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: &str = "OTEL_EXPORTER_OTLP_TRACES_
 pub const OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: &str = "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT";
 /// Compression algorithm to use, defaults to none.
 pub const OTEL_EXPORTER_OTLP_TRACES_COMPRESSION: &str = "OTEL_EXPORTER_OTLP_TRACES_COMPRESSION";
+/// The transport protocol. Options MUST be one of: `grpc`, `http/protobuf`, `http/json`.
+/// By default `http/protobuf`
+/// See
+/// [Specify Protocol](https://github.com/open-telemetry/opentelemetry-specification/blob/0e78770920864a734d0f15ad1456963db0e439e9/specification/protocol/exporter.md#specify-protocol)
+/// for more details.
+pub const OTEL_EXPORTER_OTLP_TRACES_PROTOCOL: &str = "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL";
+
 /// Key-value pairs to be used as headers associated with gRPC or HTTP requests
 /// for sending spans.
 /// Example: `k1=v1,k2=v2`
